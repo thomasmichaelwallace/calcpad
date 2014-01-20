@@ -1,0 +1,27 @@
+{
+  "name": "calcpad",
+  "version": "0.1.0",
+  "homepage": "https://github.com/thomasmichaelwallace/calcpad",
+  "authors": [
+    "thomasmichaelwallace <thomasmichaelwallace@googlemail.com>"
+  ],
+  "description": "An engineering calculation pad.",
+  "main": "calcpad.html",
+  "keywords": [
+    "maths",
+    "engineering",
+    "calculations"
+  ],
+  "license": "Apache v2",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.0.3"
+  }
+}

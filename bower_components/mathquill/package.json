@@ -1,0 +1,13 @@
+{
+  "name": "mathquill",
+  "version": "0.9.3",
+  "dependencies": {
+    "pjs": "3.x"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "uglify-js": "2.x",
+    "less": "git://github.com/cloudhead/less.js",
+    "supervisor": "*"
+  }
+}
