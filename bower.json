@@ -22,6 +22,27 @@
     "tests"
   ],
   "dependencies": {
-    "bootstrap": "~3.0.3"
+    "MathJax": "*",
+    "backbone": "~1.1.0",
+    "mathjs": "~0.18.0",
+    "mathquill": "https://github.com/mathquill/mathquill.git#~0.9.3",
+    "bootstrap": "~3.0.3",
+    "requirejs": "~2.1.10",
+    "underscore": "~1.5.2"
+  },
+  "exportsOverride": {
+    "backbone": {
+      "": "backbone.js"
+    },
+    "mathquill": {
+      "": "build/mathquill.css",
+      "font": "build/font/*"
+    },
+    "requirejs": {
+      "": "require.js"
+    },
+    "underscore": {
+      "": "underscore.js"
+    }
   }
 }
