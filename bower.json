@@ -43,6 +43,14 @@
     },
     "underscore": {
       "": "underscore.js"
+    },
+    "MathJax": {
+      "": "MathJax.js",
+      "config": "config",
+      "extensions": "extensions",
+      "fonts": "fonts",
+      "jax": "jax",
+      "localization": "localization"
     }
   }
 }

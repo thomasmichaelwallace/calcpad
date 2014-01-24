@@ -11,6 +11,16 @@
     <link rel="shortcut icon" href="favicon.png">
 
     <title>CalcPad - Static Demo</title>
+
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        displayAlign: "left"
+      });
+    </script>    
+<script type="text/javascript"
+  src="lib/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
     
     <!-- Bootstrap -->
     <link href="lib/bootstrap/bootstrap.css" rel="stylesheet">
@@ -26,7 +36,7 @@
     <![endif]-->
 
   </head>
-  <body>
+  <body>  
   
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
@@ -40,29 +50,103 @@
 
       <div class="list-group">
         <a href="#" class="list-group-item">
+          
+          <!-- Title line -->          
+          <h3>Simply Supported Beam</h3>
+
+        </a>      
+        <a href="#" class="list-group-item">
+          
+          <!-- Section line -->          
           <h4>Scope</h4>
+
         </a>
         <a href="#" class="list-group-item">
-          <p>These calculations analyse the maximum shear, moment and displacement of a simply supported beam subject to a uniformly distributed load.</p>
+          
+          <!-- Paragraph line -->
+          <p>These calculations analyse the maximum moment along a simply supported beam subject to a uniformly distributed load.</p>
           <p>The aim is just to find a 'zero-point' for the feature set of CalcPad, and should not be taken as an alternative to proper engineering design.</p>
+        
         </a>
         <a href="#" class="list-group-item">
-          <img src="/img/beam_ss.png" class="img-rounded, img-responsive">
+          
+          <!-- Section line -->          
+          <h4>Scenario</h4>
+
+        </a>        
+        <a href="#" class="list-group-item text-center" >
+
+          <!-- Image line -->
+          <img src="/img/beam_ss.png" class="img-rounded img-responsive img-center">
+
         </a>
-        <a href="#" class="list-group-item">
-          <div class="row">
-            <div class="col-md-8">
-              <label class="control-label">Span of the beam</label>
-            </div>
-            <div class="col-md-4">
-              <div class="input-group">
-                <span class="input-group-addon">L</span>
-                <input type="text" class="form-control" value="15">
-                <span class="input-group-addon">m</span>
+        <a href="#" class="list-group-item">        
+
+          <!-- Input variable line -->
+          <div class="form-horizontal">
+            <div class="form-group list-form-group">
+              <div class="col-sm-7">
+                <p class="form-control-static">Unsupported span of the beam</p>
+              </div>
+              <div class="col-sm-5">
+                <div class="input-group">
+                  <span class="input-group-addon latex-addon">\(L\)</span>
+                  <input type="text" class="form-control" placeholder="10">
+                  <span class="input-group-addon latex-addon">\(\mathrm{m}\)</span>
+                </div>
               </div>
             </div>
           </div>
+
         </a>
+        <a href="#" class="list-group-item">
+
+          <!-- Input variable line -->
+          <div class="form-horizontal">
+            <div class="form-group list-form-group">
+              <div class="col-sm-7">
+                <p class="form-control-static">Uniformly distributed load</p>
+              </div>
+              <div class="col-sm-5">
+                <div class="input-group">
+                  <span class="input-group-addon latex-addon">\(w\)</span>
+                  <input type="text" class="form-control" placeholder="5">
+                  <span class="input-group-addon latex-addon">\(\mathrm{kN/m}\)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </a>
+        <a href="#" class="list-group-item">
+          
+          <!-- Section line -->          
+          <h4>Results</h4>
+
+        </a>
+        <a href="#" class="list-group-item">
+          
+          <!-- Formula line -->          
+          <p>Maximum moment<p>
+          <div class="latex-line">
+            \[M_{max} = \frac{wL^2}{8}\]
+          </div>
+          <div class="form-horizontal">
+            <div class="form-group list-form-group">
+              <div class="col-sm-7">
+              </div>
+              <div class="col-sm-5">
+                <div class="input-group">
+                  <span class="input-group-addon latex-addon">\(M_{max}\)</sub></span>
+                  <p class="form-control">62.5</p>
+                  <span class="input-group-addon latex-addon">\(\mathrm{kNm}\)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </a>        
+
       </div>        
 
     </div><!-- /.container -->

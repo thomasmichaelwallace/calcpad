@@ -1,7 +1,29 @@
 body {
-  padding-top: 75px;
+	/* Offset fixed nav-bar. */
+  	padding-top: 75px;
 }
 
-.container {
+div.container {
+	/* Sets the global width of a pgae. */
 	width: 700px;
+}
+
+img.img-center {
+	/* Centres an image. */
+	margin-left: auto;
+	margin-right: auto;
+}
+
+div.list-form-group {
+	/* Makes form margins behave inside lists. */
+	margin-bottom: 0px;
+}
+
+div.latex-line {
+	/* Positions a line of LaTeX formatted code. */
+	margin-left: 50px;
+}
+
+span.latex-addon {
+	font-size: 90%;
 }
