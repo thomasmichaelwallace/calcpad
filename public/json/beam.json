@@ -1,54 +1,51 @@
-{
-	"name": "Simply Supported Beam",
-	"lines": [
-		{
-			"lineType": "Title",
-			"text": "Simply Supported Beam"
-		},
-		{
-			"lineType": "SectionTitle",
-			"text": "Scope"
-		},
-		{
-			"lineType": "Paragraph",
-			"bodyText": "These calculations analyse the maximum moment along a simply supported beam subject to a uniformly distributed load.\nThe aim is just to find a 'zero-point' for the feature set of CalcPad, and should not be taken as an alternative to proper engineering design."			
-		},
-		{
-			"lineType": "SectionTitle",
-			"text": "Scenario"
-		},		
-		{
-			"lineType": "Image",
-			"image": "/img/beam_ss.png"
-		},
-		{
-			"lineType": "Input",
-			"description": "Unsupported span of the beam",
-			"symbol": "L",
-			"value": 10,
-			"unit": "m",
-			"scope": "L"
-		},
-		{
-			"lineType": "Input",
-			"description": "Uniformly distributed load",
-			"symbol": "w",
-			"value": 5,
-			"unit": "kN/m",
-			"scope": "w"
-		},
-		{
-			"lineType": "SectionTitle",
-			"text": "Results"
-		},
-		{
-			"lineType": "Formula",
-			"description": "Maximum moment",
-			"symbol": "M_{max}",
-			"latex": "\\frac{wL^2}{8}",
-			"formula": "(w * L^2)/8",
-			"units": "kNm",
-			"value": 62.5
-		}
-	]
-}
+[
+	{
+		"lineType": "Title",
+		"text": "Simply Supported Beam"
+	},
+	{
+		"lineType": "SectionTitle",
+		"text": "Scope"
+	},
+	{
+		"lineType": "Paragraph",
+		"bodyText": "These calculations analyse the maximum moment along a simply supported beam subject to a uniformly distributed load.\nThe aim is just to find a 'zero-point' for the feature set of CalcPad, and should not be taken as an alternative to proper engineering design."
+	},
+	{
+		"lineType": "SectionTitle",
+		"text": "Scenario"
+	},
+	{
+		"lineType": "Image",
+		"image": "/img/beam_ss.png"
+	},
+	{
+		"lineType": "Input",
+		"description": "Unsupported span of the beam",
+		"symbol": "L",
+		"value": 10,
+		"unit": "m",
+		"scope": "L"
+	},
+	{
+		"lineType": "Input",
+		"description": "Uniformly distributed load",
+		"symbol": "w",
+		"value": 5,
+		"unit": "kN/m",
+		"scope": "w"
+	},
+	{
+		"lineType": "SectionTitle",
+		"text": "Results"
+	},
+	{
+		"lineType": "Formula",
+		"description": "Maximum moment",
+		"symbol": "M_{max}",
+		"latex": "\\frac{wL^2}{8}",
+		"formula": "(w * L^2)/8",
+		"units": "kNm",
+		"value": 62.5
+	}
+]
