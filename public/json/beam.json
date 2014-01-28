@@ -44,8 +44,7 @@
 		"description": "Maximum moment",
 		"symbol": "M_{max}",
 		"latex": "\\frac{wL^2}{8}",
-		"formula": "(w * L^2)/8",
-		"units": "kNm",
-		"value": 62.5
+		"formula": "(w * L^2) / 8",
+		"units": "kNm"
 	}
 ]

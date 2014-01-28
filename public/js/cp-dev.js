@@ -5,6 +5,12 @@
 
 $(function() {
 
+	var math = mathjs();
+	var MathScope = {
+		L: 20,
+		w: 10
+	};
+
 	// Abstract line model.
 	var LineItem = Backbone.Model.extend({
 
@@ -12,7 +18,25 @@ $(function() {
 			return {
 				lineType: "Blank"
 			};
-		}
+		},
+
+		initialize: function() {
+			this.listenTo(this, 'add', this.setScope);
+		},
+
+		setScope: function() {
+			var scope = this.get("scope");
+			if (scope !== undefined) {
+				MathScope[scope] = this.get("value");
+			}
+		},
+
+		calculate: function() {
+			/* jshint ignore:start */
+			var result = math.eval(this.get("formula"), MathScope);
+			/* jshint ignore:end */
+			this.set("value", result);
+			}
 
 	});
 
@@ -24,12 +48,16 @@ $(function() {
 
 		template: _.template('<p><%= lineType %></p>'),
 
+    // The DOM events specific to an item.
+		events: {
+			"change .form-control"		: "updateScope",
+		},
+
 		initialize: function() {
 			this.listenTo(this.model, 'change', this.render);
 		},
 
-		prerender: function() { },
-		postrender: function() { },
+		prerender: function() {},
 
 		render: function() {
 			this.prerender();
@@ -37,6 +65,13 @@ $(function() {
 			this.postrender();
 			return this;
 		},
+
+		postrender: function() {},
+
+		updateScope: function() {
+			MathScope[this.model.get("scope")] = parseFloat(this.$('.form-control').val());
+			this.model.collection.updateScopes();
+		}
 
 	});
 
@@ -130,11 +165,11 @@ $(function() {
 							'</div>',
 						'</div>',
 					'</div>'
-				].join('\n'))
-			}),
-			postrender: function() {
-				MathJax.Hub.Queue(["Typeset", MathJax.Hub, this]);
-			}
+				].join('\n')),
+				postrender: function() {
+					MathJax.Hub.Queue(["Typeset", MathJax.Hub, this.el]);
+				}
+			})
 		},
 
 		Formula: {
@@ -170,11 +205,14 @@ $(function() {
 							'</div>',
 						'</div>',
 					'</div>'
-				].join('\n'))
-			}),
-			postrender: function() {
-				MathJax.Hub.Queue(["Typeset", MathJax.Hub, this]);
-			}
+				].join('\n')),
+				prerender: function() {
+					this.model.calculate();
+				},
+				postrender: function() {
+					MathJax.Hub.Queue(["Typeset", MathJax.Hub, this.el]);
+				}
+			})
 		}
 	};
 
@@ -192,6 +230,10 @@ $(function() {
 		},
 
 		url: 'json/beam.json',
+
+		updateScopes: function() {
+			this.models[8].calculate();
+		}
 
 	});
 	var Lines = new LineCollection();
@@ -221,7 +263,6 @@ $(function() {
 			this.$("#pad").append(view.render().el);
 		},
 
-		// Add all items in the **Todos** collection at once.
 		addAll: function() {
 			Lines.each(this.addOne, this);
 		},
