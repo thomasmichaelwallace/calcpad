@@ -6,17 +6,16 @@
 $(function() {
 
 	var math = mathjs();
-	var MathScope = {
-		L: 20,
-		w: 10
-	};
+	var MathScope = {};
 
 	// Abstract line model.
 	var LineItem = Backbone.Model.extend({
 
 		defaults: function() {
 			return {
-				lineType: "Blank"
+				lineType: "Blank",
+				value: 0,
+				dependants: []
 			};
 		},
 
@@ -28,6 +27,7 @@ $(function() {
 			var scope = this.get("scope");
 			if (scope !== undefined) {
 				MathScope[scope] = this.get("value");
+				this.collection.modelScopes[scope] = this;
 			}
 		},
 
@@ -36,7 +36,7 @@ $(function() {
 			var result = math.eval(this.get("formula"), MathScope);
 			/* jshint ignore:end */
 			this.set("value", result);
-			}
+		}
 
 	});
 
@@ -69,8 +69,9 @@ $(function() {
 		postrender: function() {},
 
 		updateScope: function() {
-			MathScope[this.model.get("scope")] = parseFloat(this.$('.form-control').val());
-			this.model.collection.updateScopes();
+			var scope = this.model.get("scope");
+			MathScope[scope] = parseFloat(this.$('.form-control').val());
+			this.model.collection.updateScopes(scope);
 		}
 
 	});
@@ -206,9 +207,6 @@ $(function() {
 						'</div>',
 					'</div>'
 				].join('\n')),
-				prerender: function() {
-					this.model.calculate();
-				},
 				postrender: function() {
 					MathJax.Hub.Queue(["Typeset", MathJax.Hub, this.el]);
 				}
@@ -231,8 +229,27 @@ $(function() {
 
 		url: 'json/beam.json',
 
-		updateScopes: function() {
-			this.models[8].calculate();
+		modelScopes: {},
+
+		setScopes: function() {
+			var col = this;
+			_.each(this.models, function(element, index, list) {
+				var deps = element.get("deps");
+				if (deps !== undefined) {
+					_.each(deps, function(delement, dindex, dlist) {
+						col.modelScopes[delement] = element;
+					});
+				}
+			});
+			_.each(this.modelScopes, function(value, key, list) {
+				value.calculate();
+			});
+		},
+
+		updateScopes: function(scope) {
+			if (scope in this.modelScopes) {
+				this.modelScopes[scope].calculate();
+			}
 		}
 
 	});
@@ -249,7 +266,11 @@ $(function() {
 			this.listenTo(Lines, 'reset', this.addAll);
 			this.listenTo(Lines, 'all', this.render);
 
-			Lines.fetch();
+			Lines.fetch({
+				success: function(model, response) {
+					Lines.setScopes();
+				}
+			});
 		},
 
 		addOne: function(line) {
@@ -264,7 +285,7 @@ $(function() {
 		},
 
 		addAll: function() {
-			Lines.each(this.addOne, this);
+			console.log("addAll");
 		},
 	});
 
