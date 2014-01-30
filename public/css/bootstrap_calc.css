@@ -27,3 +27,15 @@ div.latex-line {
 span.latex-addon {
 	font-size: 90%;
 }
+
+.edit {
+	display: none;
+}
+
+a.editing .edit {
+	display: block;
+}
+
+a.editing .view {
+	display: none;
+}

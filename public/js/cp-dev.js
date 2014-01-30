@@ -51,6 +51,8 @@ $(function() {
     // The DOM events specific to an item.
 		events: {
 			"change .form-control"		: "updateScope",
+			"dblclick .view"			: "edit",
+			"change .form-item"			: "saveedit"
 		},
 
 		initialize: function() {
@@ -72,6 +74,15 @@ $(function() {
 			var scope = this.model.get("scope");
 			MathScope[scope] = parseFloat(this.$('.form-control').val());
 			this.model.collection.updateScopes(scope);
+		},
+
+		edit: function() {
+			this.$el.addClass("editing");
+		},
+
+		saveedit: function() {
+			this.model.set("text", this.$('.form-item').val());
+			this.$el.removeClass("editing");
 		}
 
 	});
@@ -89,7 +100,14 @@ $(function() {
 				}
 			}),
 			view: LineView.extend({
-				template: _.template('<h3><%= text %></h3>')
+				template: _.template([
+					'<div class="view">',
+						'<h3><%= text %></h3>',
+					'</div>',
+					'<div class="edit">',
+						'<input type="text" class="form-item form-control" placeholder="<%= text %>"">',
+					'<div/>'
+				].join('\n'))
 			})
 		},
 
