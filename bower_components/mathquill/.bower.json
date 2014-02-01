@@ -9,7 +9,6 @@
     "commit": "9ffa0873581202f3bc681de5392f7e855a2b4c51"
   },
   "_source": "https://github.com/mathquill/mathquill.git",
-  "_target": "~0.9.3",
-  "_originalSource": "https://github.com/mathquill/mathquill.git",
-  "_direct": true
+  "_target": "*",
+  "_originalSource": "https://github.com/mathquill/mathquill.git"
 }

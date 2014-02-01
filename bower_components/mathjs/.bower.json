@@ -23,7 +23,6 @@
     "commit": "fe8d832bedd06dd411a37d35b781241762e7e590"
   },
   "_source": "git://github.com/josdejong/mathjs.git",
-  "_target": "~0.18.0",
-  "_originalSource": "mathjs",
-  "_direct": true
+  "_target": "*",
+  "_originalSource": "mathjs"
 }

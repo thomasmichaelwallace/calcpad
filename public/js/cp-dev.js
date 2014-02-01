@@ -5,6 +5,45 @@
 
 $(function() {
 
+	$("div").on('mousedown', ".view", function(){
+		if (editing !== undefined) {
+			editing.saveAndClose();
+		}
+		return false;
+	});
+	$("div").on('mousedown', ".edit", function(){
+		return false;
+	});
+	$("div").on('mousedown', "#toolbar", function(){
+		return false;
+	});
+	$('body').on('mousedown', null, function() {
+		if (editing !== undefined) {
+			editing.saveAndClose();
+		}
+		return false;
+	});
+
+	$("#pad").on('click', 'input', function () {
+		$(this).select();
+	});
+	$("#pad").on('focus', 'input', function () {
+		$(this).select();
+	});
+	$("#toolbar").on('blur', '.last-element', function () {
+		editing.blurLast();
+	});
+	$("#toolbar").on('click', 'button', function() {
+		var index = editing.model.collection.indexOf(editing.model);
+		index += 1;
+		console.log(this.name);
+		editing.model.collection.add(
+			new lineTypes[this.name].model(),
+			{at: index}
+		);
+		editing.blurLast();
+	});
+
 	var math = mathjs();
 	var MathScope = {};
 
@@ -36,9 +75,13 @@ $(function() {
 			var result = math.eval(this.get("formula"), MathScope);
 			/* jshint ignore:end */
 			this.set("value", result);
-		}
+		},
+
+		view: {}
 
 	});
+
+	var editing;
 
 	// Abstract line view.
 	var LineView = Backbone.View.extend({
@@ -46,13 +89,46 @@ $(function() {
 		tagName: "a",
 		className: "list-group-item",
 
-		template: _.template('<p><%= lineType %></p>'),
+		template: _.template([
+			'<div class="view">',
+				'<%= this.templates.view(this.model.toJSON()) %>',
+			'</div>',
+			'<div class="edit">',
+				'<%= this.templates.edit(this.model.toJSON()) %>',
+			'<div/>'
+		].join('\n')),
 
-    // The DOM events specific to an item.
 		events: {
-			"change .form-control"		: "updateScope",
+			"change .scope-value"		: "updateScope",
 			"dblclick .view"			: "edit",
-			"change .form-item"			: "saveedit"
+			"focus .edit"				: "focus",
+			"blur .edit"				: "blur"//,
+			//"blur .last-element"		: "blurLast"
+		},
+
+		focus: function() {
+			if (editing !== undefined && this !== editing) {
+				editing.$el.removeClass("editing");
+			}
+		},
+		blur: function() {
+		},
+
+		blurLast: function() {
+			this.saveAndClose();
+			var index = this.model.collection.indexOf(this.model);
+			this.model.collection.at(index + 1).view.edit();
+		},
+
+		saveAndClose: function() {
+			_.each(this.$(".edit .form-control"), function(element, index, list) {
+				if (element.name !== undefined) {
+					editing.model.set(element.name, element.value);
+				}
+			});
+			editing = undefined;
+			this.$el.removeClass("editing");
+			$("#toolbar").removeClass("toolbar-on");
 		},
 
 		initialize: function() {
@@ -60,30 +136,31 @@ $(function() {
 		},
 
 		prerender: function() {},
-
 		render: function() {
 			this.prerender();
 			this.$el.html(this.template(this.model.toJSON()));
 			this.postrender();
 			return this;
 		},
-
 		postrender: function() {},
 
 		updateScope: function() {
 			var scope = this.model.get("scope");
-			MathScope[scope] = parseFloat(this.$('.form-control').val());
+			MathScope[scope] = parseFloat(this.$('.scope-value').val());
 			this.model.collection.updateScopes(scope);
 		},
 
 		edit: function() {
+			if (editing !== undefined) {
+				editing.$el.removeClass("editing");
+			}
 			this.$el.addClass("editing");
+			this.$(".first-element").focus().select();
+			editing = this;
+			// locate toolbar
+			$("#toolbar").detach().insertAfter(this.$el);
+			$("#toolbar").addClass("toolbar-on");
 		},
-
-		saveedit: function() {
-			this.model.set("text", this.$('.form-item').val());
-			this.$el.removeClass("editing");
-		}
 
 	});
 
@@ -100,14 +177,10 @@ $(function() {
 				}
 			}),
 			view: LineView.extend({
-				template: _.template([
-					'<div class="view">',
-						'<h3><%= text %></h3>',
-					'</div>',
-					'<div class="edit">',
-						'<input type="text" class="form-item form-control" placeholder="<%= text %>"">',
-					'<div/>'
-				].join('\n'))
+				templates: {
+					view: _.template('<h3><%= text %></h3>'),
+					edit: _.template('<input type="text" name="text" class="form-control first-element" value="<%= text %>"">')
+				}
 			})
 		},
 
@@ -121,7 +194,10 @@ $(function() {
 				}
 			}),
 			view: LineView.extend({
-				template: _.template('<h4><%= text %></h4>')
+				templates: {
+					view: _.template('<h4><%= text %></h4>'),
+					edit: _.template('<input type="text" name="text" class="form-control first-element" value="<%= text %>"">')
+				}
 			})
 		},
 
@@ -135,7 +211,10 @@ $(function() {
 				}
 			}),
 			view: LineView.extend({
-				template: _.template('<p><%= formattedText %></p>'),
+				templates: {
+					view: _.template('<div class="paragraph-fix"><p><%= formattedText %></p></div>'),
+					edit: _.template('<textarea type="text" name="bodyText" class="form-control first-element last-element"><%= bodyText %></textarea>')
+				},
 				prerender: function() {
 					this.model.set('formattedText', this.model.get('bodyText').replace('\n', '<p></p>'));
 				}
@@ -169,22 +248,40 @@ $(function() {
 				}
 			}),
 			view: LineView.extend({
-				template: _.template([
-					'<div class="form-horizontal">',
-						'<div class="form-group list-form-group">',
-							'<div class="col-sm-7">',
-								'<p class="form-control-static"><%= description %></p>',
-							'</div>',
-							'<div class="col-sm-5">',
-								'<div class="input-group">',
-									'<span class="input-group-addon latex-addon">\\(<%= symbol %>\\)</span>',
-									'<input type="text" class="form-control" placeholder="<%= value %>">',
-									'<span class="input-group-addon latex-addon">\\(\\mathrm{<%= unit %>}\\)</span>',
+				templates: {
+					view: _.template([
+						'<div class="form-horizontal">',
+							'<div class="form-group list-form-group">',
+								'<div class="col-sm-7">',
+									'<p class="form-control-static"><%= description %></p>',
+								'</div>',
+								'<div class="col-sm-5">',
+									'<div class="input-group">',
+										'<span class="input-group-addon latex-addon">\\(<%= symbol %>\\)</span>',
+										'<input type="text" class="form-control scope-value" value="<%= value %>">',
+										'<span class="input-group-addon latex-addon">\\(\\mathrm{<%= unit %>}\\)</span>',
+									'</div>',
 								'</div>',
 							'</div>',
-						'</div>',
-					'</div>'
-				].join('\n')),
+						'</div>'
+					].join('\n')),
+					edit: _.template([
+						'<div class="form-horizontal">',
+							'<div class="form-group list-form-group">',
+								'<div class="col-sm-7">',
+									'<input type="text" class="form-control first-element" name="description" value="<%= description %>">',
+								'</div>',
+								'<div class="col-sm-5">',
+									'<div class="input-group">',
+										'<span class="input-group-addon latex-addon">\\(<%= symbol %>\\)</span>',
+										'<input type="text" class="form-control last-element" value="<%= value %>">',
+										'<span class="input-group-addon latex-addon">\\(\\mathrm{<%= unit %>}\\)</span>',
+									'</div>',
+								'</div>',
+							'</div>',
+						'</div>'
+					].join('\n'))
+				},
 				postrender: function() {
 					MathJax.Hub.Queue(["Typeset", MathJax.Hub, this.el]);
 				}
@@ -291,15 +388,18 @@ $(function() {
 			});
 		},
 
-		addOne: function(line) {
+		addOne: function(line, collection, options) {
 			var type = line.get('lineType');
-			var view;
 			if (type in lineTypes) {
-				view = new lineTypes[type].view({ model: line });
+				line.view = new lineTypes[type].view({ model: line });
 			} else {
-				view = new LineView({ model: line });
+				line.view = new LineView({ model: line });
 			}
-			this.$("#pad").append(view.render().el);
+			if (options !== undefined && "at" in options) {
+				this.$('#pad a:nth-child(' + options.at + ')').after(line.view.render().el);
+			} else {
+				this.$("#pad").append(line.view.render().el);
+			}
 		},
 
 		addAll: function() {

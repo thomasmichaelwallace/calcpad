@@ -4,7 +4,7 @@ body {
 }
 
 div.container {
-	/* Sets the global width of a pgae. */
+	/* Sets the global width of a page. */
 	width: 700px;
 }
 
@@ -38,4 +38,33 @@ a.editing .edit {
 
 a.editing .view {
 	display: none;
+}
+
+a.navbar-inline-container {
+	padding: 0;
+}
+nav.navbar-inline {
+	margin: 0;
+	border: none;
+}
+form.navbar-inline {
+	margin: 0;
+}
+
+@font-face {
+  font-family: 'Glyphicons Halflings';
+
+  src: url('../lib/bootstrap/glyphicons-halflings-regular.eot');
+  src: url('../lib/bootstrap/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('../lib/bootstrap/glyphicons-halflings-regular.woff') format('woff'), url('../lib/bootstrap/glyphicons-halflings-regular.ttf') format('truetype'), url('../lib/bootstrap/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
+}
+
+a#toolbar {
+	display: none;
+}
+a#toolbar.toolbar-on {
+	display: block;
+}
+
+div.paragraph-fix {
+	margin-bottom: -10px;
 }
