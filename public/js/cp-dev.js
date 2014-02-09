@@ -1,277 +1,564 @@
 /**
- * CalcPad - Development Script Dump
- * Copyright (C) 2014 Thomas Michael Wallace
- * Apache 2 Licensed
+ * CalcPad
+ * https://github.com/thomasmichaelwallace/calcpad
+ *
+ * CalcPad is a web application for writing engineering calculations.
+ * It provides an extensable library of 'lines' that can be used to form
+ * even complex calculations from an easy to use graphical interface.
+ *
+ * Currently CalcPad is under preliminary development; so hope for great
+ * things, even if they're not here yet!
+ *
+ * @author      thomas michael wallace <thomasmichaelwallace@googlemail.com>
+ * @version     0.1.0
+ * @date        2014-01-18
+ * @copyright   Thomas Michael Wallace 2013-2014
+ *
+ * @license
+ * Copyright (C) 2014 thomas michael wallace <thomasmichaelwallace@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
-// Development script for CalcPad
-
-// This file will ultimately grow into modules, and all that jazz.
-// But for now it's just a simple one-page testament to bad programming.
-
+/**
+    CalcPad application instance.
+    @module     CalcPad
+    @requires   Backbone
+    @requires   mathjs
+    @requires   MathJax
+*/
 $(function () {
 
-    var math;           // global instance of the math.js library
-    var editing;        // global reference to currently editing object.
-
-    var Lines;          // base collection of lines that make-up the pad.
-
-    // Abstract line model.
     var LineItem = Backbone.Model.extend({
+        /**
+         * Prototype functionality of a single Line.
+         * @lends LineItem.prototype
+         */
 
-        protoValues: {
-                id: null,
-                lineType: "Blank",
-                value: undefined,
-                deps: [],
-                formula: undefined
+        /**
+         * Default values given to new, or incomplete, lines.
+         *
+         * The defaults of the base, LineItem, prototype will persist unless
+         * specified in the extending lineType definition.
+         *
+         * @property {string} null - Symbol representing the value of this line.
+         */
+        defaults: {
+            symbol: null
         },
-        lineValues: {},
 
-        /** **/
-        defaults: function () {
-            var defaults;   // compiled list of base and partial type defaults
-            defaults = {};
-            _.extend(defaults, this.protoValues, this.lineValues);
-            return defaults;
+        /**
+         * The type of line.
+         * @type {string}
+         * @public
+         */
+        lineType: "Blank",
+
+        /**
+         * Evaluated value of the line.
+         * @type {number}
+         * @private
+         */
+        value: null,
+
+        /**
+         * Function used to evaluate the current value of this line.
+         * @return {number} - Evaluated value.
+         * @protected
+         */
+        expression: function() {
+            return null;
         },
 
+        /**
+         * Client ids of lines this line is dependent upon.
+         * @type {Array.<number>}
+         * @protected
+         */
+        dependents: [],
+
+        /** @constructs */
         initialize: function () {
-            if (this.get("formula") === undefined) {
-                this.set("formula", "_model(" + this.id + ")");
-            }
+            // Allow lazy line definitions by inheriting prototype defaults.
+            _.defaults(this.defaults, LineItem.prototype.defaults);
         },
 
+        /**
+         * Convert to JSON with evaluated value for view templating.
+         * @return {object}
+         */
+        templateJSON: function () {
+            var json = {};
+            _.extend(json, this.toJSON(), { value: this.value });
+            console.log(json);
+            return json;
+        },
+
+        /**
+         * Causes the value of the model to be re-evaluated.
+         * @public
+         */
         calculate: function () {
-            var result;     //  the calculated result.
-            /* jshint ignore:start */
-            result = math.eval(this.get("formula"), this.collection.scope);
-            /* jshint ignore:end */
-            this.set("value", result);
+            updateValue(expression);
         },
 
-        view: {}
+        /**
+         * Updates the evaluated value of the model.
+         * @private
+         * @param {number} data - value to set line to.
+         * @fires Backbone.Model#change
+         */
+        updateValue: function (data) {
+            this.value = data;
+            this.trigger("change", this);
+        }
 
     });
 
-    // Abstract line view.
-    var LineView = Backbone.View.extend({
 
+    var LineView = Backbone.View.extend({
+        /**
+         * Prototype view of a single Line.
+         * @lends LineView.prototype
+         */
+
+         /**
+          * Element type used to enclose the view.
+          * @type {string}
+          * @see {@link http://backbonejs.org/#View|Backbone.js}
+          * @private
+          */
         tagName: "a",
+
+         /**
+          * Class applied to enclosing view element.
+          * @type {string}
+          * @see {@link http://backbonejs.org/#View|Backbone.js}
+          * @private
+          */
         className: "list-group-item",
 
+         /**
+          * Underscore template to be rendered as the line view.
+          *
+          * The view prototype includes logic to switch between two divs with
+          * 'view' and 'edit' classes applied, merging in the .view and .edit
+          * micro-templates of the this.templates name space.
+          *
+          * In most cases it should be enough just to implement this.templates
+          * fully.
+          *
+          * Altering this master template should be undertaken with
+          * case, acknowledging the additional responsibilities of manual
+          * edit/view toggling behaviour.
+          *
+          * @type {string}
+          * @protected
+          */
         template: _.template([
             '<div class="view">',
-                '<%= this.templates.view(this.model.toJSON()) %>',
+                '<%= this.templates.view(this.model.templateJSON()) %>',
             '</div>',
             '<div class="edit">',
-                '<%= this.templates.edit(this.model.toJSON()) %>',
-            '<div/>'
+                '<%= this.templates.edit(this.model.templateJSON()) %>',
+            '</div>'
         ].join('\n')),
 
+        templates: {
+            view: _.template(
+                '<p>Default view: <%= symbol %> = <%= value %></p>'
+                ),
+            edit: _.template(
+                '<p>Default editor.</p>'
+                )
+        },
+
+        /**
+         * Events watched by the view.
+         *
+         * The defaults of the base, LineView, prototype will persist unless
+         * specified in the extending lineType definition.
+         *
+         * Note that overloading the base events will break the default toogle
+         * between view and edit.
+         *
+         * @see {@link http://backbonejs.org/#View-delegateEvents|Backbone.js}
+         * @protected
+         */
         events: {
             "change .scope-value"       : "updateScope",
             "dblclick .view"            : "edit",
-            "focus .edit"               : "focus",
-            "blur .edit"                : "blur"//,
-            //"blur .last-element"      : "blurLast"
+            "focus .edit"               : "focus"
         },
 
-        focus: function () {
-            if (editing !== undefined && this !== editing) {
-                editing.$el.removeClass("editing");
+        /** @constructs */
+        initialize: function () {
+            // Allow lazy line definitions by inheriting prototype defaults.
+            _.defaults(this.events, LineItem.prototype.events);
+            this.listenTo(this.model, 'change', this.render);
+        },
+
+        /**
+         * Called immediately before the view is rendered.
+         * @protected
+         */
+        preRender: function () {},
+
+        /**
+         * Renders the line view.
+         *
+         * The LineView prototype provides two sequence functions to implement:
+         * prerender and postrender. These are called either-side of the
+         * default appending of this.template.
+         *
+         * @see {@link http://backbonejs.org/#View-render|Backbone.js}
+         * @private
+         */
+        render: function () {
+            this.preRender();
+            this.$el.html(this.template(this.model.templateJSON()));
+            this.postRender();
+            return this;
+        },
+
+        /**
+         * Called immediately after the view is rendered.
+         * @protected
+         */
+        postRender: function () {},
+
+        /**
+         * Called when the user requests the editing mode of this line.
+         *
+         * Following the prototype behaviour, this sets the current view as the
+         * editing view on the pad, switches the template to the editor and
+         * relocates the toolbar.
+         *
+         * @private
+         */
+        edit: function () {
+            // Users are not preventing from switching edit focus between lines.
+            if (Pad.editing !== undefined) {
+                Pad.editing.$el.removeClass("editing");
             }
-        },
-        blur: function () {
+            Pad.editing = this;
+            this.$el.addClass("editing");
+
+            this.$(".first-element").focus().select();
+
+            // Relocate the toolbar.
+            $("#toolbar").detach().insertAfter(this.$el);
+            $("#toolbar").addClass("toolbar-on");
         },
 
-        blurLast: function () {
-            var index;  // location of view within collection.
-            this.saveAndClose();
-            index = this.model.collection.indexOf(this.model);
-            this.model.collection.at(index + 1).view.edit();
-        },
-
-        saveAndClose: function () {
+        /**
+         * Called when the editor view is requested to saving.
+         *
+         * Following the prototype behaviour, this automatically updates model
+         * attributes from inputs with the '.model-attribute' class by matching
+         * names.
+         *
+         * This function should be re-implemented when extending into more
+         * complex views.
+         *
+         * @protected
+         */
+        save: function () {
             _.each(this.$(".edit .form-control"),
                     function(element, index, list) {
                 if (element.name !== undefined) {
                     editing.model.set(element.name, element.value);
                 }
             });
-            editing = undefined;
+        },
+
+        /**
+         * Called when the editor is to be closed.
+         *
+         * Following the prototype behaviour, the editor is closed after the
+         * user tabs beyond the toolbar, edits another line, or clicks outside
+         * of the editor.
+         *
+         * @param {boolean=} false - Save the model when closing the editor.
+         * @private
+         */
+        close: function (saveAndClose) {
+            if (saveAndClose) { this.save(); }
+            Pad.editing = undefined;
             this.$el.removeClass("editing");
             $("#toolbar").removeClass("toolbar-on");
-        },
-
-        initialize: function () {
-            this.listenTo(this.model, 'change', this.render);
-        },
-
-        prerender: function () {},
-        render: function () {
-            this.prerender();
-            this.$el.html(this.template(this.model.toJSON()));
-            this.postrender();
-            return this;
-        },
-        postrender: function () {},
-
-        updateScope: function () {
-            this.model.set("value", parseFloat(this.$('.scope-value').val()));
-            this.model.collection.calculate([this.model.id]);
-        },
-
-        edit: function () {
-            if (editing !== undefined) {
-                editing.$el.removeClass("editing");
-            }
-            this.$el.addClass("editing");
-            this.$(".first-element").focus().select();
-            editing = this;
-            // locate toolbar
-            $("#toolbar").detach().insertAfter(this.$el);
-            $("#toolbar").addClass("toolbar-on");
-        },
+        }
 
     });
 
-    // Collection of lines forming a single pad.
     var LineCollection = Backbone.Collection.extend({
+        /**
+         * Prototype of a collection of lines forming a single pad.
+         * @lends LineCollection.prototype
+         */
 
+        /**
+         * The CalcServer URL.
+         *
+         * Currently this is a flat JSON file while CalcServer is developed.
+         *
+         * @type {string}
+         * @see {@link http://backbonejs.org/#Collection-url|Backbone.js}
+         */
+        url: 'json/beam.json',
+
+        /**
+         * Provide polymorphic assignment between different types of lines using
+         * the model.lineType attribute and matching it against the defined
+         * line types.
+         *
+         * @param {object} attrs    - List of attributes.
+         * @param {object} options  - List of options.
+         * @see {@link http://backbonejs.org/#Collection-model|Backbone.js}
+         * @private
+         */
         model: function (attrs, options) {
-            var type;   // actual linetype of the model
+            var type;
             type = attrs.lineType;
-            if (type in lineTypes) {
+            if (type !== undefined && type in lineTypes) {
                 return new lineTypes[type].model(attrs, options);
             } else {
+                // The default implementation indicates a 404 for the view.
                 return new LineItem(attrs, options);
             }
         },
 
-        url: 'json/beam.json',
-
-        scope: {
-            _model: function(id) {
-                return Lines.get(id).get("value");
-            }
-        },
-        depTree: [],
-
-        setScopes: function() {
-            var col;        // current collection
-            col = this;
-            _.each(this.models, function(element, index, list) {
-                var deps;   // dependencies of current model.
-                deps = element.get("deps");
-                if (deps !== undefined) {
-                    _.each(deps, function(delement, dindex, dlist) {
-                        col.modelScopes[delement] = element;
-                    });
-                }
-            });
-            _.each(this.modelScopes, function(value, key, list) {
-                value.calculate();
-            });
-        },
-
-        updateScopes: function(scope) {
-            if (scope in this.modelScopes) {
-                this.modelScopes[scope].calculate();
-            }
-        },
-
+        /**
+         * Causes all relevant lines in the pad to re-calculate following the
+         * update of a set of values.
+         *
+         * @param {Array.number} dirty - Line cids that have changed.
+         * @public
+         */
         calculate: function(dirty) {
-            _.each(this.depTree, function(element, index, list) {
-                var line;   // current line model.
-                line = Lines.get(element);
+            var collection;
+            collection = this;
+
+            // Walk the topologically sorted tree for efficient re-calcuation.
+            _.each(this.updateOrder.order, function(cid) {
+                var line;
+                line = collection.get(cid);
+
                 if (dirty !== undefined) {
-                    _.each(line.get("deps"), function(element, index, list) {
-                        if (_.contains(dirty, element)) {
+
+                    _.each(line.dependents, function(dependent) {
+                        if (_.contains(dirty, dependent)) {
+                            // Update values in the tree from the dirty set.
                             line.calculate();
+                            // Once these are updated they are, too, dirty.
                             dirty.push(line.id);
                         }
                     });
+
                 } else {
+                    // Without a subset of updated values, calculate every line.
                     line.calculate();
                 }
             });
         },
 
-        edges: [],
+        /**
+         * Manager for the order that values are re-calculated.
+         *
+         * @namespace
+         * @private
+         */
+        updateOrder: {
 
-        addEdges: function(line) {
-            var self;       // reference back to the current collection.
-            var edge;       // id of the edge formed.
-            self = this;
-            edge = line.id;
-            if (line.get("deps").length > 0) {
-                _.each(line.get("deps"), function(element, index, list) {
-                    self.edges.push([element, edge]);
+            /**
+             * Topologically sorted list defining the optimal order the values
+             * should be (re-)calculated.
+             *
+             * @type {Array.number}
+             * @public
+             */
+            order: [],
+
+            /**
+             * Add all the dependents of a line to the tree.
+             *
+             * @param {Object} line - Line to add dependents of.
+             * @public
+             */
+            addDependents: function(line) {
+                var self;       // reference back to the current collection.
+                var edge;       // id of the edge formed.
+                self = this;
+                edge = line.id;
+                if (line.get("deps").length > 0) {
+                    _.each(line.get("deps"), function(element, index, list) {
+                        self.edges.push([element, edge]);
+                    });
+                }
+                this.sort();
+            },
+
+            /**
+             * Remove all the dependents of a line from the tree.
+             *
+             * @param {Object} line - Line to remove dependents of.
+             * @public
+             */
+            removeDependents: function(line) {
+                this.edges = _.each(this.edges, function(element) {
+                    return element[1] == id;
                 });
-            }
-        },
-        removeEdges: function(id) {
-            this.edges = _.each(this.edges, function(element) {
-                return element[1] == id;
-            });
-        },
-        buildTree: function() {
-            this.depTree = tsort(this.edges);
-        }
+                this.sort();
+            },
 
+            /**
+             * DAG edges of the pad line dependencies.
+             *
+             * @type {Array.Array}
+             * @private
+             */
+            edges: [],
+
+            /**
+             * Re-sort the update tree from the DAG of edges.
+             *
+             * This must be called when edges changes to keep the calculation
+             * order current.
+             *
+             * @private
+             */
+            sort: function() {
+                // Employ Shin Suzuki's topolgical sort implementation for now.
+                this.order = tsort(this.edges);
+            }
+
+        }
 
     });
 
-    Lines = new LineCollection();
-
-
-    // CalcPad Application view
     var PadView = Backbone.View.extend({
+        /**
+         * Prototype view of the lines collection, forming a coherent pad.
+         * @lends PadView.prototype
+         */
 
+        /**
+         * Shared reference to the line currently being edited.
+         * @private
+         */
+        editing: undefined,
+
+        /**
+         * The containing element of the whole calculation pad.
+         *
+         * @see {@link http://backbonejs.org/#View-el|Backbone.js}
+         * @private
+         */
         el: $(".container"),
 
+        /** @constructs */
         initialize: function() {
-            this.listenTo(Lines, 'add', this.addOne);
-            this.listenTo(Lines, 'reset', this.addAll);
-            this.listenTo(Lines, 'all', this.render);
+            this.listenTo(Lines, 'add', this.add);
 
             Lines.fetch({
                 success: function(model, response) {
-                    Lines.buildTree();
+                    // Build the update order for the first time.
+                    Lines.updateOrder.sort();
                     Lines.calculate();
                 }
             });
         },
 
-        addOne: function(line, collection, options) {
-            var type = line.get('lineType');
-            if (type in lineTypes) {
-                line.view = new lineTypes[type].view({ model: line });
+        /**
+         * Append a new line view when a new line item is added.
+         *
+         * @see {@link http://backbonejs.org/#Collection-add|Backbone.js}
+         * @private
+         */
+        add: function(line, collection, options) {
+            var view;
+            if (line.lineType in lineTypes) {
+                view = new lineTypes[type].view({ model: line });
             } else {
-                line.view = new LineView({ model: line });
+                view = new LineView({ model: line });
             }
             if (options !== undefined && "at" in options) {
+                // Lines added with the toolbar are done so with position.
                 this.$('#pad a:nth-child(' + options.at + ')')
-                        .after(line.view.render().el);
+                        .after(view.render().el);
             } else {
-                this.$("#pad").append(line.view.render().el);
+                // During fetch lines are just appended to the end.
+                this.$("#pad").append(view.render().el);
             }
 
-            Lines.addEdges(line);
-        },
+            // Update the DAG edges for the update order.
+            Lines.updateOrder.addDependents(line);
+        }
 
-        addAll: function() {
-            console.log("addAll");
-        },
     });
 
-    math = mathjs();
-    var lineTypes = loadTypes(LineItem, LineView);
-    var Pad = new PadView();
+    // Stop click propegation in an editor.
+    $("div").on('mousedown', ".edit", function (){
+        return false;
+    });
+    // Stop click propegation in the toolbar.
+    $("div").on('mousedown', "#toolbar", function (){
+        return false;
+    });
+    // Clicking on another view closes the editor, saving changes.
+    $("div").on('mousedown', ".view", function (){
+        if (editing !== undefined) {
+            editing.close(true);
+        }
+        return false;
+    });
+    // Clicking outside the calculation closes the editor, saving changes.
+    $('body').on('mousedown', null, function () {
+        if (editing !== undefined) {
+            editing.close(true);
+        }
+        return false;
+    });
 
-    // Both this Shin's incrediablly useful topological sort algorthim,
-    // until I get a chance to write my own.
+    // Automatically select all the text in an input box.
+    $("#pad").on('click', 'input', function () {
+        $(this).select();
+    });
+    $("#pad").on('focus', 'input', function () {
+        $(this).select();
+    });
+
+    // Tabing from the toolbar moves to the next editor.
+    $("#toolbar").on('blur', '.last-element', function () {
+        editing.save(); // The toolbar only shows when linked to an editor.
+        var index;      // The index to insert the new line at.
+        index = this.model.collection.indexOf(this.model);
+        editing.model.collection.at(index + 1).view.edit();
+    });
+
+    // Add a new line after, and of the type named by, the toolbar button.
+    $("#toolbar").on('click', 'button', function () {
+        editing.save(); // The toolbar only shows when linked to an editor.
+        var index;      // The index to insert the new line at.
+        index = editing.model.collection.indexOf(editing.model) + 1;
+        editing.model.collection.add(
+            new lineTypes[this.name].model(),
+            {at: index}
+        );
+    });
+
+    // Use Shin's incrediablly useful topological sort implementaiton...,
+    // ... until I get a chance to write my own!
 
     /**
     * general topological sort
@@ -281,12 +568,11 @@ $(function () {
     *
     * @returns Array : topological sorted list of IDs
     **/
-
     function tsort(edges) {
         var nodes = {}, // hash: stringified id of the node => { id: id,
-                        // afters: lisf of ids }
-        sorted = [], // sorted list of IDs ( returned value )
-        visited = {}; // hash: id of already visited node => true
+                        //  afters: list of ids }
+        sorted = [],    // sorted list of IDs ( returned value )
+        visited = {};   // hash: id of already visited node => true
 
         var Node = function(id) {
             this.id = id;
@@ -330,42 +616,15 @@ $(function () {
         return sorted;
     }
 
-    $("div").on('mousedown', ".view", function (){
-        if (editing !== undefined) {
-            editing.saveAndClose();
-        }
-        return false;
-    });
-    $("div").on('mousedown', ".edit", function (){
-        return false;
-    });
-    $("div").on('mousedown', "#toolbar", function (){
-        return false;
-    });
-    $('body').on('mousedown', null, function () {
-        if (editing !== undefined) {
-            editing.saveAndClose();
-        }
-        return false;
-    });
-    $("#pad").on('click', 'input', function () {
-        $(this).select();
-    });
-    $("#pad").on('focus', 'input', function () {
-        $(this).select();
-    });
-    $("#toolbar").on('blur', '.last-element', function () {
-        editing.blurLast();
-    });
-    $("#toolbar").on('click', 'button', function () {
-        var index;  // index at insert the new line type.
+    /** The collection of lines that make-up the CalcPad. */
+    var Lines;
+    Lines = new LineCollection();
 
-        index = editing.model.collection.indexOf(editing.model) + 1;
-        editing.model.collection.add(
-            new lineTypes[this.name].model(),
-            {at: index}
-        );
-        editing.blurLast();
-    });
+    /** The application view of the CalcPad. */
+    var Pad;
+    Pad = new PadView();
+
+    /** Compiled line type templates. */
+    var lineTypes = {}; // loadTypes(LineItem, LineView);
 
 });
