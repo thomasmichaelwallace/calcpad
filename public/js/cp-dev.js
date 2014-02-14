@@ -51,18 +51,14 @@ $(function () {
          * The defaults of the base, LineItem, prototype will persist unless
          * specified in the extending lineType definition.
          *
-         * @property {string} null - Symbol representing the value of this line.
+         * @property {string} null      - Symbol representing the value of this line.
+         * @property {string} "Blank"   - The type of line.
          */
         defaults: {
-            symbol: null
+            lineType: "Blank",
+            symbol: null,
+            savedValue: null
         },
-
-        /**
-         * The type of line.
-         * @type {string}
-         * @public
-         */
-        lineType: "Blank",
 
         /**
          * Evaluated value of the line.
@@ -77,7 +73,7 @@ $(function () {
          * @protected
          */
         expression: function() {
-            return null;
+            return this.value;
         },
 
         /**
@@ -91,7 +87,13 @@ $(function () {
         initialize: function () {
             // Allow lazy line definitions by inheriting prototype defaults.
             _.defaults(this.defaults, LineItem.prototype.defaults);
+            this.load();
         },
+
+        /**
+         * Called when a model is loaded from a file
+         */
+        load: function () {},
 
         /**
          * Convert to JSON with evaluated value for view templating.
@@ -100,7 +102,6 @@ $(function () {
         templateJSON: function () {
             var json = {};
             _.extend(json, this.toJSON(), { value: this.value });
-            console.log(json);
             return json;
         },
 
@@ -109,7 +110,7 @@ $(function () {
          * @public
          */
         calculate: function () {
-            updateValue(expression);
+            this.updateValue(this.expression());
         },
 
         /**
@@ -121,6 +122,13 @@ $(function () {
         updateValue: function (data) {
             this.value = data;
             this.trigger("change", this);
+        },
+
+        /**
+         * Switches the model into editing mode.
+         */
+        edit: function() {
+            this.trigger("edit", this);
         }
 
     });
@@ -176,10 +184,10 @@ $(function () {
 
         templates: {
             view: _.template(
-                '<p>Default view: <%= symbol %> = <%= value %></p>'
+                '<p class="text-danger">Error: Missing template.</p></div>'
                 ),
             edit: _.template(
-                '<p>Default editor.</p>'
+                '<p>Error: Missing editor.</p>'
                 )
         },
 
@@ -196,7 +204,6 @@ $(function () {
          * @protected
          */
         events: {
-            "change .scope-value"       : "updateScope",
             "dblclick .view"            : "edit",
             "focus .edit"               : "focus"
         },
@@ -204,8 +211,10 @@ $(function () {
         /** @constructs */
         initialize: function () {
             // Allow lazy line definitions by inheriting prototype defaults.
-            _.defaults(this.events, LineItem.prototype.events);
+            _.defaults(this.events, LineView.prototype.events);
+
             this.listenTo(this.model, 'change', this.render);
+            this.listenTo(this.model, 'edit', this.edit);
         },
 
         /**
@@ -277,7 +286,7 @@ $(function () {
             _.each(this.$(".edit .form-control"),
                     function(element, index, list) {
                 if (element.name !== undefined) {
-                    editing.model.set(element.name, element.value);
+                    Pad.editing.model.set(element.name, element.value);
                 }
             });
         },
@@ -372,6 +381,19 @@ $(function () {
             });
         },
 
+
+        scope: {
+            _model: function(symbol) {
+                var value = null;
+                _.each(Lines.models, function(element, index, list){
+                    if (element.get("symbol") == symbol) {
+                        value = element.value;
+                    }
+                });
+                return value;
+            }
+        },
+
         /**
          * Manager for the order that values are re-calculated.
          *
@@ -400,8 +422,8 @@ $(function () {
                 var edge;       // id of the edge formed.
                 self = this;
                 edge = line.id;
-                if (line.get("deps").length > 0) {
-                    _.each(line.get("deps"), function(element, index, list) {
+                if (line.dependents.length > 0) {
+                    _.each(line.dependents, function(element, index, list) {
                         self.edges.push([element, edge]);
                     });
                 }
@@ -468,6 +490,8 @@ $(function () {
 
         /** @constructs */
         initialize: function() {
+            this.buildToolbar();
+
             this.listenTo(Lines, 'add', this.add);
 
             Lines.fetch({
@@ -480,6 +504,26 @@ $(function () {
         },
 
         /**
+         * Build the toolbar from the imported line types.
+         *
+         * @private
+         */
+        buildToolbar: function() {
+            var first=" last-element";  // Only applied to the first button.
+            _.each(lineTypes, function(element, index, list) {
+                if (element.toolbar !== undefined) {
+                    this.$("#toolbar-menu").append([
+                        '<button type="button" name="' + index + '"',
+                        ' class="btn btn-default navbar-btn' + first + '">',
+                            element.toolbar,
+                        '</button>'
+                    ].join('\n'));
+                    first="";
+                }
+            });
+        },
+
+        /**
          * Append a new line view when a new line item is added.
          *
          * @see {@link http://backbonejs.org/#Collection-add|Backbone.js}
@@ -487,8 +531,8 @@ $(function () {
          */
         add: function(line, collection, options) {
             var view;
-            if (line.lineType in lineTypes) {
-                view = new lineTypes[type].view({ model: line });
+            if (line.get("lineType") in lineTypes) {
+                view = new lineTypes[line.get("lineType")].view({ model: line });
             } else {
                 view = new LineView({ model: line });
             }
@@ -517,17 +561,24 @@ $(function () {
     });
     // Clicking on another view closes the editor, saving changes.
     $("div").on('mousedown', ".view", function (){
-        if (editing !== undefined) {
-            editing.close(true);
+        if (Pad.editing !== undefined) {
+            Pad.editing.close(true);
+            return false;
         }
-        return false;
     });
     // Clicking outside the calculation closes the editor, saving changes.
     $('body').on('mousedown', null, function () {
-        if (editing !== undefined) {
-            editing.close(true);
+        if (Pad.editing !== undefined) {
+            Pad.editing.close(true);
+            return false;
         }
-        return false;
+    });
+    // Pressing enter closes the editor, saving changes.
+    $("div").on('keypress', ".edit", function (e) {
+        if (e.keyCode != 13) return;
+        if (Pad.editing !== undefined) {
+            Pad.editing.close(true);
+        }
     });
 
     // Automatically select all the text in an input box.
@@ -540,21 +591,22 @@ $(function () {
 
     // Tabing from the toolbar moves to the next editor.
     $("#toolbar").on('blur', '.last-element', function () {
-        editing.save(); // The toolbar only shows when linked to an editor.
+        Pad.editing.save(); // The toolbar only shows when linked to an editor.
         var index;      // The index to insert the new line at.
-        index = this.model.collection.indexOf(this.model);
-        editing.model.collection.at(index + 1).view.edit();
+        index = Pad.editing.model.collection.indexOf(Pad.editing.model) + 1;
+        Pad.editing.model.collection.at(index).edit();
     });
 
     // Add a new line after, and of the type named by, the toolbar button.
     $("#toolbar").on('click', 'button', function () {
-        editing.save(); // The toolbar only shows when linked to an editor.
+        Pad.editing.save(); // The toolbar only shows when linked to an editor.
         var index;      // The index to insert the new line at.
-        index = editing.model.collection.indexOf(editing.model) + 1;
-        editing.model.collection.add(
+        index = Pad.editing.model.collection.indexOf(Pad.editing.model) + 1;
+        Pad.editing.model.collection.add(
             new lineTypes[this.name].model(),
             {at: index}
         );
+        Pad.editing.model.collection.at(index).edit();
     });
 
     // Use Shin's incrediablly useful topological sort implementaiton...,
@@ -620,11 +672,11 @@ $(function () {
     var Lines;
     Lines = new LineCollection();
 
+    /** Compiled line type templates. */
+    var lineTypes = loadTypes(LineItem, LineView);
+
     /** The application view of the CalcPad. */
     var Pad;
     Pad = new PadView();
-
-    /** Compiled line type templates. */
-    var lineTypes = {}; // loadTypes(LineItem, LineView);
 
 });

@@ -1,78 +1,78 @@
 [
-	{
-		"lineType": "Title",
-		"text": "Simply Supported Beam",
-		"id": 0
-	},
-	{
-		"lineType": "SectionTitle",
-		"text": "Scope",
-		"id": 1
-	},
-	{
-		"lineType": "Paragraph",
-		"bodyText": "These calculations analyse the maximum moment along a simply supported beam subject to a uniformly distributed load.\nThe aim is just to find a 'zero-point' for the feature set of CalcPad, and should not be taken as an alternative to proper engineering design.",
-		"id": 2
-	},
-	{
-		"lineType": "SectionTitle",
-		"text": "Scenario",
-		"id": 4
-	},
-	{
-		"lineType": "Image",
-		"image": "/img/beam_ss.png",
-		"id": 5
-	},
-	{
-		"lineType": "Input",
-		"description": "Unsupported span of the beam",
-		"symbol": "L",
-		"value": 10,
-		"unit": "m",
-		"id": 10
-	},
-	{
-		"lineType": "SectionTitle",
-		"text": "Results",
-		"id": 12
-	},
-	{
-		"lineType": "Formula",
-		"description": "Maximum moment",
-		"symbol": "M_{max}",
-		"latex": "\\frac{wL}{8}",
-		"formula": "(_model(21) * _model(10)) / 8",
-		"units": "kNm",
-		"deps": [10, 21],
-		"id": 13
-	},
-	{
-		"lineType": "Formula",
-		"description": "Maximum reaction",
-		"symbol": "R_{max}",
-		"latex": "\\frac{w}{2}",
-		"formula": "_model(21) / 2",
-		"units": "kNm",
-		"deps": [21],
-		"id": 14
-	},
-	{
-		"lineType": "Formula",
-		"description": "Moment lever arm",
-		"symbol": "z",
-		"latex": "\\frac{M}{R}",
-		"formula": "_model(13) / _model(14)",
-		"units": "m",
-		"deps": [13, 14],
-		"id": 84
-	},
-	{
-		"lineType": "Input",
-		"description": "Uniformly distributed load",
-		"symbol": "w",
-		"value": 5,
-		"unit": "kN",
-		"id": 21
-	}
+{
+        "lineType": "Title",
+        "text": "Simply Supported Beam",
+        "id": 0
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Scope",
+        "id": 1
+    },
+    {
+        "lineType": "Paragraph",
+        "bodyText": "These calculations analyse the maximum moment along a simply supported beam subject to a uniformly distributed load.\nThe aim is just to find a 'zero-point' for the feature set of CalcPad, and should not be taken as an alternative to proper engineering design.",
+        "id": 2
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Scenario",
+        "id": 4
+    },
+    {
+        "lineType": "Image",
+        "image": "/img/beam_ss.png",
+        "id": 5
+    },
+    {
+        "lineType": "Input",
+        "description": "Unsupported span of the beam",
+        "symbol": "L",
+        "savedValue": 10,
+        "unit": "m",
+        "id": 10
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Results",
+        "id": 12
+    },
+    {
+        "lineType": "Formula",
+        "description": "Maximum moment",
+        "symbol": "M_{max}",
+        "latex": "\\frac{wL}{8}",
+        "formula": "(_model(\"w\") * _model(\"L\")) / 8",
+        "units": "kNm",
+        "deps": [10, 21],
+        "id": 13
+    },
+    {
+        "lineType": "Formula",
+        "description": "Maximum reaction",
+        "symbol": "R_{max}",
+        "latex": "\\frac{w}{2}",
+        "formula": "_model(\"w\") / 2",
+        "units": "kNm",
+        "deps": [21],
+        "id": 14
+    },
+    {
+        "lineType": "Formula",
+        "description": "Moment lever arm",
+        "symbol": "z",
+        "latex": "\\frac{M_{max}}{R_{max}}",
+        "formula": "_model(\"M_{max}\") / _model(\"R_{max}\")",
+        "units": "m",
+        "deps": [13, 14],
+        "id": 84
+    },
+    {
+        "lineType": "Input",
+        "description": "Uniformly distributed load",
+        "symbol": "w",
+        "savedValue": 5,
+        "unit": "kN",
+        "id": 21
+    }
 ]

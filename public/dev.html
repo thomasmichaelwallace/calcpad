@@ -51,6 +51,10 @@
       </script>
       <script type="text/javascript" src="/lib/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
+      <!-- MathQuill -->
+      <link rel="stylesheet" type="text/css" href="/lib/mathquill/mathquill.css">`
+      <script type="text/javascript" src="/lib/mathquill/mathquill.js"></script>
+
       <!-- Math.js -->
       <script type="text/javascript" src="lib/mathjs/math.js"></script>
 
@@ -77,22 +81,15 @@
 
         <a id="toolbar" class="list-group-item navbar-inline-container toolbar-off">
           <nav class="navbar navbar-default navbar-inline" role="navigation">
-            <form class="navbar-form navbar-left navbar-inline" role="search">
-              <button type="button" name="Title" class="btn btn-default navbar-btn last-element">
-                <span class="glyphicon glyphicon-header"></span>
-              </button>
-              <button type="button" name="SectionTitle" class="btn btn-default navbar-btn">
-                <span class="glyphicon glyphicon glyphicon-bold"></span>
-              </button>
-              <button type="button" name="Paragraph" class="btn btn-default navbar-btn">
-                <span class="glyphicon glyphicon-align-justify"></span>
-              </button>
+            <form id="toolbar-menu" class="navbar-form navbar-left navbar-inline" role="search">
             </form>
           </nav>
         </a>
       </div><!-- /.list-group -->
 
     </div><!-- /.container -->
+
+    <span class="mathquill-editable">f(x)=?</span>
 
   </body>
 </html>

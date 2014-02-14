@@ -36,7 +36,8 @@
     },
     "mathquill": {
       "": "build/mathquill.css",
-      "font": "build/font/*"
+      "": "build/mathquill.js",
+      "font": "build/font"
     },
     "requirejs": {
       "": "require.js"
