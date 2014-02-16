@@ -1,0 +1,160 @@
+[
+    {
+        "lineType": "Title",
+        "text": "ULS Concrete Beam Check"
+    },
+    {
+        "lineType": "Paragraph",
+        "bodyText": "A simple concrete beam in ultimate limit state bending check.\\nThis is provided as a demonstration of where CalcPad is heading; feel free to pull it apart until it breaks.\\nGot an idea, bug, or just want to snoop at the code? Take a look at <a href=\"https://github.com/thomasmichaelwallace/calcpad\">CalcPad on GitHub</a> for more information."
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Forces"
+    },
+    {
+        "lineType": "Input",
+        "description": "Design moment",
+        "symbol": "M",
+        "savedValue": 525,
+        "unit": "kNm"
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Geometry"
+    },
+    {
+        "lineType": "Image",
+        "image": "/img/beam_area.png"
+    },
+    {
+        "lineType": "Input",
+        "description": "Beam width",
+        "symbol": "b",
+        "savedValue": 350,
+        "unit": "mm"
+    },
+    {
+        "lineType": "Input",
+        "description": "Overall depth",
+        "symbol": "h",
+        "savedValue": 660,
+        "unit": "mm"
+    },
+    {
+        "lineType": "Input",
+        "description": "Centre of reinforcement from base.",
+        "symbol": "c_{ctr}",
+        "savedValue": 60,
+        "unit": "mm"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Effective depth",
+        "symbol": "d",
+        "latex": "h-c_{ctr}",
+        "unit": "mm"
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Material"
+    },
+    {
+        "lineType": "Input",
+        "description": "Characteristic cylinder strength of concrete",
+        "symbol": "f_{ck}",
+        "savedValue": 30,
+        "unit": "N/mm^2"
+    },
+    {
+        "lineType": "Input",
+        "description": "Characteristic tensile strength of reinforcement",
+        "symbol": "f_{yk}",
+        "savedValue": 500,
+        "unit": "N/mm^2"
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Stress Ratios"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Reinforcement factor",
+        "symbol": "K",
+        "latex": "\\frac{M\\times10^6}{bd^2f_{ck}}",
+        "unit": "-"
+    },
+    {
+        "lineType": "Condition",
+        "description": "For single reinforcement bending:",
+        "latex": "K \\leq 0.167",
+        "condition": 3
+    },
+    {
+        "lineType": "Formula",
+        "description": "Lever arm ratio from K",
+        "symbol": "z_{d,K}",
+        "latex": "0.5\\times(1+\\sqrt{1-3.53K})",
+        "unit": "-"
+    },
+    {
+        "lineType": "Condition",
+        "description": "Lever arm should be limited, so that:",
+        "latex": "z_{d,K} \\leq 0.95",
+        "condition": 1
+    },
+    {
+        "lineType": "Formula",
+        "description": "Lever arm",
+        "symbol": "z",
+        "latex": "z_{d,K}d",
+        "unit": "-",
+        "state": "1"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Lever arm",
+        "symbol": "z",
+        "latex": "0.95",
+        "unit": "-",
+        "state": "0"
+    },
+    {
+        "lineType": "SectionTitle",
+        "text": "Reinforcement design"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Minimum area of bending steel required",
+        "symbol": "A_{s,M}",
+        "latex": "\\frac{M\\times10^6}{0.87zf_{yk}}",
+        "unit": "mm^2"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Minimum area of slab steel required",
+        "symbol": "A_{s,min}",
+        "latex": "\\frac{0.15}{100}bh",
+        "unit": "mm^2"
+    },
+    {
+        "lineType": "Condition",
+        "description": "Design is dominated by bending where:",
+        "latex": "A_{s,M} > A_{s,min}",
+        "condition": 2
+    },
+    {
+        "lineType": "Formula",
+        "description": "Design reinforcement",
+        "symbol": "A_s",
+        "latex": "A_{s,M}",
+        "unit": "mm^2",
+        "state": "2"
+    },
+    {
+        "lineType": "Formula",
+        "description": "Design reinforcement",
+        "symbol": "A_s",
+        "latex": "A_{s,min}",
+        "unit": "mm^2"
+    }
+]

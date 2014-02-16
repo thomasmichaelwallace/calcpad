@@ -1,0 +1,131 @@
+/* description: Convert a sub-set of more strict LaTeX formulae into evaluatable math.js. */
+
+/* Adapted from the original Python CalcPad, 2011. */
+
+{
+    "lex": {
+        "rules": [
+            ["\\s+",            "/* skip whitespace */"                 ],
+
+            // Pure tokens
+            ["\\{",             "return 'VO';"                          ],
+            ["\\}",             "return 'VC';"                          ],
+            ["\\[",             "return 'AO';"                          ],
+            ["\\]",             "return 'AC';"                          ],
+            ["\\(",             "return 'BO';"                          ],
+            ["\\)",             "return 'BC';"                          ],
+            ["\\d+",            "return 'NUM';"                         ],
+
+            // Special tokens
+            ["[+-/^]",          "return 'OP';"                          ],
+            ["\\^",             "return 'XPOW';"                        ],
+            ["e",               "return 'ROP';"                         ],
+            ["\\\\cdot",        "yytext = '*'; return 'OP';"            ],
+            ["\\\\times",       "yytext = '*'; return 'OP';"            ],
+            ["\\\\div",         "yytext = '/'; return 'OP';"            ],
+            ["\\\\backslash",   "yytext = '/'; return 'OP';"            ],
+            ["\\\\symbol[{][\"][^\"]+[\"][}]",
+                "yytext = '_model(\"' + yytext.substr(9,yyleng-11) + '\")'; return 'ROP';"],
+
+            // Reserved words
+            ["\\\\pi",          "yytext = 'pi'; return 'ROP';"          ],
+            ["\\\\{",           "yytext = '('; return 'ROP';"           ],
+            ["\\\\}",           "yytext = ')'; return 'ROP';"           ],
+
+            // Conditionals
+            ["=",               "yytext = '=='; return 'CON';"          ],
+            ["<",               "yytext = '<'; return 'CON';"           ],
+            [">",               "yytext = '>'; return 'CON';"           ],
+            ["\\\\leq",           "yytext = '<='; return 'CON';"        ],
+            ["\\\\geq",           "yytext = '>='; return 'CON';"        ],
+
+            // Single arguments
+            ["\\\\ln",          "yytext = 'log($1)'; return 'SOP';"     ],
+            ["\\\\log",         "yytext = 'log10($1)'; return 'SOP';"   ],
+            ["\\\\sqrt",        "yytext = 'sqrt($1)'; return 'SOP';"    ],
+            ["\\\\sin",         "yytext = 'sin($1)'; return 'SOP';"     ],
+            ["\\\\cos",         "yytext = 'cos($1)'; return 'SOP';"     ],
+            ["\\\\tan",         "yytext = 'tan($1)'; return 'SOP';"     ],
+            ["\\\\cot",         "yytext = 'tan($1)'; return 'SOP';"     ],
+            ["\\\\sec",         "yytext = 'cos($1)'; return 'SOP';"     ],
+            ["\\\\csc",         "yytext = 'sin($1)'; return 'SOP';"     ],
+            ["\\\\arcsin",      "yytext = 'asin($1)'; return 'SOP';"    ],
+            ["\\\\arccos",      "yytext = 'acos($1)'; return 'SOP';"    ],
+            ["\\\\arctan",      "yytext = 'atan($1)'; return 'SOP';"    ],
+
+            // Double arguments
+            ["\\\\frac",        "yytext = '(($1)/($2))'; return 'DOP';" ],
+            ["\\\\tfrac",       "yytext = '(($1)/($2))'; return 'DOP';" ],
+            ["\\\\dfrac",       "yytext = '(($1)/($2))'; return 'DOP';" ],
+            ["\\\\cfrac",       "yytext = '(($1)/($2))'; return 'DOP';" ],
+
+            // Special arguments
+            ["\\\\vert",         "return 'XABS';"                       ],
+            ["\\\\sqrt",         "return 'XROT';"                       ],
+            ["\\\\over",         "return 'XOVR';"                       ],
+            ["\\\\log_",         "return 'XLGB';"                       ],
+
+            // Symbol tokens
+            ["([A-Za-z]|\\\\alpha|\\\\beta|\\\\gamma|\\\\delta|\\\\epsilon|\\\\zeta)(_(\\{[^}]+}|[\\w]))?",
+                                "return 'SYM';"                          ]
+        ]
+    },
+
+    "operators": [],
+    "start": "math",
+
+    "bnf": {
+        // Tree walker
+        "math": [[ "",              "$$ = 0.0; return $$;"                                  ],
+                 [ "exp",           "$$ = $1; return $$;"                                   ]],
+        // Expression builder
+        "exp":  [
+                    // an expression is formed of one or more terms.
+                    [ "term",          "$$ = $1;"                                           ],
+                    // adjacent terms imply multiplication: 2a should be 2*a.
+                    [ "exp term",      "$$ = $1 + '*' + $2;"                                ],
+                    // operator tokens are already parsable: 1 + 2.
+                    [ "exp OP term",   "$$ = $1 + $2 + $3;"                                 ],
+                    // conditional tokens are already parsable: 1 == 2
+                    [ "exp CON term",  "$$ = $1 + $2 + $3;"                                 ]
+                ],
+        // Basic units
+        "term": [
+                    // simple numbers are already parsable: 1.
+                    [ "NUM",           "$$ = $1;"                                           ],
+                    // reserved operators have been converted by the lexer: \pi = pi().
+                    [ "ROP",           "$$ = $1;"                                           ],
+                    // symbols are scoped by function: _model("a").
+                    [ "SYM",           "$$ = '_model(\"' + $1 + '\")';"                     ],
+                    // functions are defined by later rules.
+                    [ "fnc",           "$$ = $1;"                                           ],
+                    // parameters can exist alone: 1 + (2).
+                    [ "prm",           "$$ = $1;"                                           ]
+                ],
+        // Functions
+        "fnc":  [
+                    // Singe/double parameter functions that are lexed with substitution tokens.
+                    // Imply parameters for SOPs: \sin45 should be sin(45).
+                    [ "SOP term",      "$$ = $1.replace(/[$]1/, $2);"                       ],
+                    // Note that parameters can never be implied and must be arguments: \frac{a}{b}.
+                    [ "DOP arg arg",   "$$ = $1.replace(/[$]1/, $2).replace(/[$]2/, $3); "  ],
+                    // Special functions
+                    // Absolute value, internal can be a single term of a paramater.
+                    [ "XABS term XABS","$$ = 'abs(' + $2 + ')';"                            ],
+                    // Other power root: \sqrt(3){2}
+                    [ "XROT opt arg",  "$$ = 'pow(' + $3 + ', 1.0/' + $2 + ')';"            ],
+                    // Other divisors.
+                    [ "arg XOVR arg",  "$$ = '((' + $1 + ')/(' + $3 + '))';"                ],
+                    // Logs.
+                    [ "XLGN arg arg",  "$$ = 'log(' + $2 + ', ' + $3 + ')';"                ]
+                ],
+        // Syntax development
+        "prm":  [[ "arg",           "$$ = $1;"                                              ],
+                 [ "opt",           "$$ = $1;"                                              ],
+                 [ "pnt",           "$$ = $1;"                                              ]],
+        "arg":  [[ "VO exp VC",     "$$ = '(' + $2 + ')';"                                  ]],
+        "opt":  [[ "AO exp AC",     "$$ = '(' + $2 + ')';"                                  ]],
+        "pnt":  [[ "BO exp BC",     "$$ = '(' + $2 + ')';"                                  ]]
+    }
+}
+
