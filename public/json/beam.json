@@ -1,5 +1,54 @@
 [
-{
+	{
+        "lineType": "Input",
+        "description": "The one",
+        "symbol": "x",
+        "savedValue": 10,
+        "unit": "kN",
+        "id": 100
+    },
+    {
+        "lineType": "Condition",
+        "description": "The one is truely the one where",
+        "latex": "x = 5",
+        "condition": 5,
+        "id": 101
+    },
+    {
+        "lineType": "Condition",
+        "description": "Or you could say",
+        "latex": "x = 4",
+        "condition": 4,
+        "id": 180
+    },
+    {
+        "lineType": "Formula",
+        "description": "The one",
+        "symbol": "o",
+        "latex": "x^2",
+        "units": "m",
+        "state": 5,
+        "id": 102
+    },
+    {
+        "lineType": "Formula",
+        "description": "The not one",
+        "symbol": "o",
+        "latex": "x",
+        "units": "m",
+        "state": 0,
+        "id": 103
+    },
+    {
+        "lineType": "Formula",
+        "description": "Thus the one is",
+        "symbol": "i",
+        "latex": "o",
+        "units": "m",
+        "state": 0,
+        "id": 104
+    },
+    {
         "lineType": "Title",
         "text": "Simply Supported Beam",
         "id": 0
@@ -42,7 +91,6 @@
         "description": "Maximum moment",
         "symbol": "M_{max}",
         "latex": "\\frac{wL}{8}",
-        "formula": "(_model(\"w\") * _model(\"L\")) / 8",
         "units": "kNm",
         "id": 13
     },
@@ -51,7 +99,6 @@
         "description": "Maximum reaction",
         "symbol": "R_{max}",
         "latex": "\\frac{w}{2}",
-        "formula": "_model(\"w\") / 2",
         "units": "kNm",
         "id": 14
     },
@@ -60,7 +107,6 @@
         "description": "Moment lever arm",
         "symbol": "z",
         "latex": "\\frac{M_{max}}{R_{max}}",
-        "formula": "_model(\"M_{max}\") / _model(\"R_{max}\")",
         "units": "m",
         "id": 84
     },

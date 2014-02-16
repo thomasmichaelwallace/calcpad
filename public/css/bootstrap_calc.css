@@ -24,6 +24,11 @@ div.latex-line {
 	margin-left: 50px;
 }
 
+div.conditional-response {
+	float: left;
+	width: 50px;
+}
+
 span.latex-addon {
 	font-size: 90%;
 }
@@ -89,3 +94,12 @@ span.mathquill-bootstrap-area {
 	min-height: 68px;
 	margin-bottom: 10px;
 }
+
+div.condition-false {
+	color: #ddd;
+}
+.condition-false div.conditional{
+	visibility: collapse;
+}
+
+.

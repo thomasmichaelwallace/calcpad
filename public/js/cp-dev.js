@@ -67,6 +67,26 @@ $(function () {
          */
         value: null,
 
+        hasState: function () {
+            if (this.get("state") !== undefined) {
+                var map = DepTree.symbolMap[this.get("symbol")];
+                if (map === undefined) { return false; }
+                var states = DepTree.onStates;
+                for (var i = states.length - 1; i >= 0; i--) {
+                    var onState = states[i];
+                    if (onState in map) {
+                        if (onState == this.get("state")) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+
+            }
+            return true;
+        },
+
         /**
          * Function used to evaluate the current value of this line.
          * @return {number} - Evaluated value.
@@ -102,7 +122,12 @@ $(function () {
          */
         templateJSON: function () {
             var json = {};
-            _.extend(json, this.toJSON(), { value: this.value });
+            _.extend(json, this.toJSON(), {
+                value: this.value,
+                condition: this.hasState(),
+                DepTree: DepTree,
+                Lines: Lines
+            });
             return json;
         },
 
@@ -111,7 +136,6 @@ $(function () {
          * @public
          */
         calculate: function () {
-            console.log("calc_local");
             this.updateValue(this.expression());
         },
 
@@ -158,6 +182,18 @@ $(function () {
           */
         className: "list-group-item",
 
+        messages: [],
+        addMessage: function(name, alert, message, dismissable) {
+            var thisMessage = {
+                name: name,
+                alert: alert,
+                message: message,
+                dismissable: dismissable
+            };
+            this.messages.push(thisMessage);
+            this.render();
+        },
+
          /**
           * Underscore template to be rendered as the line view.
           *
@@ -176,7 +212,17 @@ $(function () {
           * @protected
           */
         template: _.template([
-            '<div class="view">',
+            '<div class="messages">',
+                '<% _.each(this.messages, function(message) { %>',
+                    '<div id="<%= message.name %>" class="alert alert-<%= message.alert %>">',
+                        '<% if (message.dismissable) { %>',
+                            '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>',
+                        '<% } %>',
+                        '<%= message.message %>',
+                    '</div>',
+                '<% }); %>',
+            '</div>',
+            '<div class="view condition-<%= (this.model.hasState()) %>">',
                 '<%= this.templates.view(this.model.templateJSON()) %>',
             '</div>',
             '<div class="edit">',
@@ -333,7 +379,7 @@ $(function () {
          * @type {string}
          * @see {@link http://backbonejs.org/#Collection-url|Backbone.js}
          */
-        url: 'json/beam.json',
+        url: 'json/concrete.json',
 
         /**
          * Provide polymorphic assignment between different types of lines using
@@ -364,7 +410,6 @@ $(function () {
          * @public
          */
         calculate: function(dirty) {
-            console.log("calc");
             var collection;
             collection = this;
 
@@ -373,35 +418,38 @@ $(function () {
                 var line;
                 line = collection.get(cid);
 
-                console.log("Walking...");
-                console.log(cid);
-                console.log(dirty);
-                if (dirty !== undefined) {
+                // if (dirty !== undefined) {
 
-                    if (_.contains(dirty, line.id)) {
-                        // Update values in the tree from the dirty set.
-                        line.calculate();
-                    }
+                //     if (_.contains(dirty, line.cid)) {
+                //         // Update values in the tree from the dirty set.
+                //         line.calculate();
 
-                    _.each(line.dependents, function(dependent) {
-                        var did = DepTree.symbolMap[dependent];
-                        if (_.contains(dirty, did)) {
-                            // Once these are updated they are, too, dirty.
-                            dirty.push(line.id);
-                            line.calculate();
-                        }
-                    });
 
-                } else {
+                //     }
+
+
+
+                //     _.each(line.dependents, function(dependent) {
+                //         var did = DepTree.getBySymbol(dependent);
+                //         if (did === undefined) {
+                //         }
+                //         if (_.contains(dirty, did.cid)) {
+                //             // Once these are updated they are, too, dirty.
+                //             dirty.push(line.cid);
+                //             line.calculate();
+                //         }
+                //     });
+
+                // } else {
                     // Without a subset of updated values, calculate every line.
-                    line.calculate();
-                }
+                line.calculate();
+                //}
             });
         },
 
         scope: {
             _model: function(symbol) {
-                return Lines.get(DepTree.symbolMap[symbol]).value;
+                return DepTree.getBySymbol(symbol).value;
             }
         }
 
@@ -564,13 +612,84 @@ $(function () {
         symbolMap: {},
 
         addSymbol: function(line) {
+
             var symbol = line.get("symbol");
             if (symbol === undefined || symbol === null ) { return; }
-            this.symbolMap[symbol] = line.id;
+
+            var state = line.get("state");
+            if (state === undefined || state === null) { state = "0"; }
+
+
+            if (symbol in this.symbolMap) {
+                var map = this.symbolMap[symbol];
+                map[state] = line.cid;
+            } else {
+                this.symbolMap[symbol] = {};
+                this.symbolMap[symbol][state] = line.cid;
+            }
+
         },
 
-        removeSymbol: function(symbol) {
-            this.symbolMap[symbol] = undefined;
+        removeSymbol: function(line) {
+            var symbol = line.get("symbol");
+            if (symbol === undefined || symbol === null ) { return; }
+
+            var state = line.get("state");
+            if (state === undefined || state === null) { state = "0"; }
+
+
+            if (symbol in this.symbolMap) {
+                var map = this.symbolMap[symbol];
+                if (state in map) {
+                    delete map[state];
+                    if (_.keys(map).length === 0) {
+                        delete this.symbolMap[symbol];
+                    }
+                }
+            }
+        },
+
+        getAllFromSymbol: function(symbol) {
+            var all = [];
+            _.each(this.symbolMap[symbol], function(line) {
+                all.push(line);
+            });
+            return all;
+        },
+
+        getBySymbol: function(symbol) {
+            var map = this.symbolMap[symbol];
+            var state;
+            for (var i = this.onStates.length - 1; i >= 0; i--) {
+                state = this.onStates[i];
+                if (state in map) { break; }
+            }
+            var line = Lines.get(this.symbolMap[symbol][state]);
+            return line;
+        },
+
+        states: {},
+        onStates: [0],
+
+        switchState: function(state, on) {
+            var index = _.indexOf(this.onStates, state);
+            if (!on && index > -1) {
+                this.onStates.splice(index, 1);
+            }
+            if (on && index == -1) {
+                this.onStates.push(state);
+            }
+
+        },
+
+        addState: function(line) {
+            var state = line.get("condition");
+            if (state === undefined || state === null ) { return; }
+            this.states[state] = line.cid;
+        },
+
+        removeState: function(line) {
+
         },
 
         /**
@@ -600,11 +719,30 @@ $(function () {
             var self;       // reference back to the current collection.
             var edge;       // id of the edge formed.
             self = this;
-            edge = line.id;
-            if (line.dependents.length > 0) {
+            edge = line.cid;
+            if (line.dependents.length == 1 && line.dependents[0] === null) {
+                self.edges.push([-1, edge]);
+            } else if (line.dependents.length > 0) {
                 _.each(line.dependents, function(element, index, list) {
-                    var mid = self.symbolMap[element];
-                    self.edges.push([mid, edge]);
+                    var sids = DepTree.getAllFromSymbol(element);
+                    for (var i = sids.length - 1; i >= 0; i--) {
+                        var mid = sids[i];
+                        if (mid === undefined) {
+                        }
+                        self.edges.push([mid, edge]);
+                    }
+                });
+            }
+
+            var stateDep = line.get("state");
+            if (stateDep !== undefined && stateDep !== null) {
+                _.each(_.keys(DepTree.symbolMap[line.get("symbol")]), function(no) {
+                    if (no != 0) {
+                        var sid = self.states[no];
+                        if (sid === undefined) {
+                        }
+                        self.edges.push([sid, edge]);
+                    }
                 });
             }
             this.sort();
@@ -618,7 +756,7 @@ $(function () {
          */
         removeDependents: function(line) {
             this.edges = _.filter(this.edges, function(element) {
-                return element[1] != line.id;
+                return element[1] != line.cid;
             });
             this.sort();
         },
@@ -633,7 +771,8 @@ $(function () {
          */
         sort: function() {
             // Employ Shin Suzuki's topolgical sort implementation for now.
-            this.order = this.tsort(this.edges);
+            var sorted = this.tsort(this.edges);
+            this.order = _.reject(sorted, function(cid) { return cid == -1; }) ;
         },
 
         // Use Shin's incrediablly useful topological sort implementaiton...,
@@ -707,6 +846,6 @@ $(function () {
     var Pad;
     Pad = new PadView();
 
-    window.DepTreeMe = DepTree;
+    //window.DepTreeMe = DepTree;
 
 });
