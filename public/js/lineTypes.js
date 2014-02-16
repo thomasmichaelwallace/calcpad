@@ -8,7 +8,8 @@
 
 // This is not correctly modular at the moment, but it clears the dev.evelopment pad.
 
-function loadTypes(LineItem, LineView) {
+function loadTypes(LineItem, LineView, DepTree) {
+
 
     math = mathjs();
 
@@ -135,12 +136,11 @@ function loadTypes(LineItem, LineView) {
                                 '<div class="col-sm-7">',
                                     '<input type="text" class="form-control first-element" name="description" value="<%= description %>">',
                                 '</div>',
-                                '<div class="col-sm-5">',
-                                    '<div class="input-group">',
-                                        '<span class="input-group-addon latex-addon">\\(<%= symbol %>\\)</span>',
-                                        '<p class="form-control"><%= value %></p>',
-                                        '<span class="input-group-addon latex-addon">\\(\\mathrm{<%= unit %>}\\)</span>',
-                                    '</div>',
+                                '<div class="col-sm-3">',
+                                    '<span class="mathquill-editable mathquill-bootstrap"><%= symbol %></span>',
+                                '</div>',
+                                '<div class="col-sm-2">',
+                                    '<input type="text" class="form-control" name="unit" value="<%= unit %>">',
                                 '</div>',
                             '</div>',
                         '</div>'
@@ -155,7 +155,15 @@ function loadTypes(LineItem, LineView) {
                 updateScope: function() {
                     this.model.updateValue(parseFloat(this.$('.scope-value').val()));
                     this.model.collection.calculate([this.model.id]);
+                },
+                preEdit: function() {
+                    this.$(".mathquill-editable").mathquill('editable');
+                },
+                preSave: function() {
+                    var latex = this.$(".mathquill-editable").mathquill('latex');
+                    this.model.set('symbol', latex);
                 }
+
             })
         },
 
@@ -184,6 +192,36 @@ function loadTypes(LineItem, LineView) {
                     return math.eval(this.get("formula"), this.collection.scope);
                     /* jshint ignore:end */
                 },
+                tokenise: function(symbolLatex) {
+                    // Clear dependents.
+                    DepTree.removeDependents(this);
+
+                    // Build symbol library (todo: make global)
+                    var symbolLib = [];
+                    _.each(this.collection.models, function(element, index, list){
+                        var symbol = element.get("symbol");
+                        if (symbol !== undefined || symbol !== null) {
+                            symbolLib.push(element.get("symbol"));
+                        }
+                    });
+                    // Reverse sort to prevent false matches.
+                    symbolLib = symbolLib.sort();
+                    symbolLib = symbolLib.reverse();
+
+                    var symbols = [];
+                    _.each(symbolLib, function(element, index, list){
+                        var symbolFunc = '_model("' + element + '")';
+                        if (symbolLatex.contains(symbolFunc)) {
+                            //var sid = DepTree.symbolMap[element];
+                            symbols.push(element);
+                        }
+                    });
+                    this.dependents = symbols;
+                    DepTree.addDependents(this);
+                },
+                setDeps: function() {
+                    return this.tokenise(this.get('formula'));
+                }
             }),
             view: LineView.extend({
                 templates: {
@@ -206,14 +244,48 @@ function loadTypes(LineItem, LineView) {
                             '</div>',
                         '</div>'
                     ].join('\n')),
-                    edit: _.template('<p>Formulas cannot be edited at the moment.</p>')
+                    edit: _.template([
+                        '<div class="form-horizontal">',
+                            '<span class="mathquill-editable mathquill-bootstrap mathquill-bootstrap-area"><%= latex %></span>',
+                        '</div>',
+                        '<div class="form-horizontal">',
+                            '<div class="form-group list-form-group">',
+                                '<div class="col-sm-7">',
+                                    '<input type="text" class="form-control first-element" name="description" value="<%= description %>">',
+                                '</div>',
+                                '<div class="col-sm-3">',
+                                    '<span class="mathquill-editable mathquill-bootstrap" id="symbol"><%= symbol %></span>',
+                                '</div>',
+                                '<div class="col-sm-2">',
+                                    '<input type="text" class="form-control" name="unit" value="<%= unit %>">',
+                                '</div>',
+                            '</div>',
+                        '</div>'
+                    ].join('\n'))
                 },
                 postRender: function() {
                     MathJax.Hub.Queue(["Typeset", MathJax.Hub, this.el]);
-                }
+                    this.$(".mathquill-editable").mathquill('editable');
+                },
+                preEdit: function() {
+                },
+                preSave: function() {
+                    console.log("save");
+                    var symbol = this.$('#symbol').mathquill('latex');
+                    this.model.set('symbol', symbol);
+                    var latexStr = this.$(".mathquill-editable").mathquill('latex');
+                    this.model.set('latex', latexStr);
+                    var mathStr = latex.parse(latexStr);
+                    this.model.set('formula', mathStr);
+                    var exp = this.model.setDeps();
+                    this.model.collection.calculate([this.model.id]);
+                },
+
+
             })
         }
 
     };
 
 }
+

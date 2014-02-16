@@ -82,6 +82,7 @@ $(function () {
          * @protected
          */
         dependents: [],
+        setDeps: function () {},
 
         /** @constructs */
         initialize: function () {
@@ -110,6 +111,7 @@ $(function () {
          * @public
          */
         calculate: function () {
+            console.log("calc_local");
             this.updateValue(this.expression());
         },
 
@@ -246,6 +248,7 @@ $(function () {
          */
         postRender: function () {},
 
+        preEdit: function () {},
         /**
          * Called when the user requests the editing mode of this line.
          *
@@ -263,6 +266,8 @@ $(function () {
             Pad.editing = this;
             this.$el.addClass("editing");
 
+            this.preEdit();
+
             this.$(".first-element").focus().select();
 
             // Relocate the toolbar.
@@ -270,6 +275,7 @@ $(function () {
             $("#toolbar").addClass("toolbar-on");
         },
 
+        preSave: function () {},
         /**
          * Called when the editor view is requested to saving.
          *
@@ -283,13 +289,16 @@ $(function () {
          * @protected
          */
         save: function () {
+            this.preSave();
             _.each(this.$(".edit .form-control"),
                     function(element, index, list) {
                 if (element.name !== undefined) {
                     Pad.editing.model.set(element.name, element.value);
                 }
             });
+            this.postSave();
         },
+        postSave: function () {},
 
         /**
          * Called when the editor is to be closed.
@@ -355,22 +364,31 @@ $(function () {
          * @public
          */
         calculate: function(dirty) {
+            console.log("calc");
             var collection;
             collection = this;
 
             // Walk the topologically sorted tree for efficient re-calcuation.
-            _.each(this.updateOrder.order, function(cid) {
+            _.each(DepTree.order, function(cid) {
                 var line;
                 line = collection.get(cid);
 
+                console.log("Walking...");
+                console.log(cid);
+                console.log(dirty);
                 if (dirty !== undefined) {
 
+                    if (_.contains(dirty, line.id)) {
+                        // Update values in the tree from the dirty set.
+                        line.calculate();
+                    }
+
                     _.each(line.dependents, function(dependent) {
-                        if (_.contains(dirty, dependent)) {
-                            // Update values in the tree from the dirty set.
-                            line.calculate();
+                        var did = DepTree.symbolMap[dependent];
+                        if (_.contains(dirty, did)) {
                             // Once these are updated they are, too, dirty.
                             dirty.push(line.id);
+                            line.calculate();
                         }
                     });
 
@@ -381,89 +399,10 @@ $(function () {
             });
         },
 
-
         scope: {
             _model: function(symbol) {
-                var value = null;
-                _.each(Lines.models, function(element, index, list){
-                    if (element.get("symbol") == symbol) {
-                        value = element.value;
-                    }
-                });
-                return value;
+                return Lines.get(DepTree.symbolMap[symbol]).value;
             }
-        },
-
-        /**
-         * Manager for the order that values are re-calculated.
-         *
-         * @namespace
-         * @private
-         */
-        updateOrder: {
-
-            /**
-             * Topologically sorted list defining the optimal order the values
-             * should be (re-)calculated.
-             *
-             * @type {Array.number}
-             * @public
-             */
-            order: [],
-
-            /**
-             * Add all the dependents of a line to the tree.
-             *
-             * @param {Object} line - Line to add dependents of.
-             * @public
-             */
-            addDependents: function(line) {
-                var self;       // reference back to the current collection.
-                var edge;       // id of the edge formed.
-                self = this;
-                edge = line.id;
-                if (line.dependents.length > 0) {
-                    _.each(line.dependents, function(element, index, list) {
-                        self.edges.push([element, edge]);
-                    });
-                }
-                this.sort();
-            },
-
-            /**
-             * Remove all the dependents of a line from the tree.
-             *
-             * @param {Object} line - Line to remove dependents of.
-             * @public
-             */
-            removeDependents: function(line) {
-                this.edges = _.each(this.edges, function(element) {
-                    return element[1] == id;
-                });
-                this.sort();
-            },
-
-            /**
-             * DAG edges of the pad line dependencies.
-             *
-             * @type {Array.Array}
-             * @private
-             */
-            edges: [],
-
-            /**
-             * Re-sort the update tree from the DAG of edges.
-             *
-             * This must be called when edges changes to keep the calculation
-             * order current.
-             *
-             * @private
-             */
-            sort: function() {
-                // Employ Shin Suzuki's topolgical sort implementation for now.
-                this.order = tsort(this.edges);
-            }
-
         }
 
     });
@@ -497,7 +436,14 @@ $(function () {
             Lines.fetch({
                 success: function(model, response) {
                     // Build the update order for the first time.
-                    Lines.updateOrder.sort();
+                    _.each(Lines.models, function(element, index, list) {
+                        DepTree.addSymbol(element);
+                    });
+                    _.each(Lines.models, function(element, index, list) {
+                        element.setDeps(); //.bind(element);
+                        DepTree.addDependents(element);
+                    });
+                    DepTree.sort();
                     Lines.calculate();
                 }
             });
@@ -544,9 +490,6 @@ $(function () {
                 // During fetch lines are just appended to the end.
                 this.$("#pad").append(view.render().el);
             }
-
-            // Update the DAG edges for the update order.
-            Lines.updateOrder.addDependents(line);
         }
 
     });
@@ -609,74 +552,161 @@ $(function () {
         Pad.editing.model.collection.at(index).edit();
     });
 
-    // Use Shin's incrediablly useful topological sort implementaiton...,
-    // ... until I get a chance to write my own!
 
     /**
-    * general topological sort
-    * @author SHIN Suzuki (shinout310@gmail.com)
-    * @param Array<Array> edges : list of edges. each edge forms Array<ID,ID>
-    *   e.g. [12 , 3]
-    *
-    * @returns Array : topological sorted list of IDs
-    **/
-    function tsort(edges) {
-        var nodes = {}, // hash: stringified id of the node => { id: id,
-                        //  afters: list of ids }
-        sorted = [],    // sorted list of IDs ( returned value )
-        visited = {};   // hash: id of already visited node => true
+     * Manager for the order that values are re-calculated.
+     *
+     * @namespace
+     * @private
+     */
+    var DepTree = {
 
-        var Node = function(id) {
-            this.id = id;
-            this.afters = [];
-        };
+        symbolMap: {},
 
-        // 1. build data structures
-        edges.forEach(function(v) {
-            var from = v[0], to = v[1];
-            if (!nodes[from]) nodes[from] = new Node(from);
-            if (!nodes[to]) nodes[to] = new Node(to);
-            nodes[from].afters.push(to);
-        });
+        addSymbol: function(line) {
+            var symbol = line.get("symbol");
+            if (symbol === undefined || symbol === null ) { return; }
+            this.symbolMap[symbol] = line.id;
+        },
 
-        // 2. topological sort
-        Object.keys(nodes).forEach(function visit(idstr, ancestors) {
-            var node = nodes[idstr],
-            id = node.id;
+        removeSymbol: function(symbol) {
+            this.symbolMap[symbol] = undefined;
+        },
 
-            // if already exists, do nothing
-            if (visited[idstr]) return;
-            if (!Array.isArray(ancestors)) ancestors = [];
-            ancestors.push(id);
-            visited[idstr] = true;
+        /**
+         * Topologically sorted list defining the optimal order the values
+         * should be (re-)calculated.
+         *
+         * @type {Array.number}
+         * @public
+         */
+        order: [],
 
-            node.afters.forEach(function(afterID) {
-                if (ancestors.indexOf(afterID) >= 0) // if already in ancestors,
-                                                     // a closed chain exists.
-                    throw new Error(
-                            'closed chain : ' + afterID + ' is in ' + id
-                            );
+        /**
+         * DAG edges of the pad line dependencies.
+         *
+         * @type {Array.Array}
+         * @private
+         */
+        edges: [],
 
-                visit(afterID.toString(), ancestors.map(function(v) {
-                        return v;
-                    })); // recursive call
+        /**
+         * Add all the dependents of a line to the tree.
+         *
+         * @param {Object} line - Line to add dependents of.
+         * @public
+         */
+        addDependents: function(line) {
+            var self;       // reference back to the current collection.
+            var edge;       // id of the edge formed.
+            self = this;
+            edge = line.id;
+            if (line.dependents.length > 0) {
+                _.each(line.dependents, function(element, index, list) {
+                    var mid = self.symbolMap[element];
+                    self.edges.push([mid, edge]);
+                });
+            }
+            this.sort();
+        },
+
+        /**
+         * Remove all the dependents of a line from the tree.
+         *
+         * @param {Object} line - Line to remove dependents of.
+         * @public
+         */
+        removeDependents: function(line) {
+            this.edges = _.filter(this.edges, function(element) {
+                return element[1] != line.id;
+            });
+            this.sort();
+        },
+
+        /**
+         * Re-sort the update tree from the DAG of edges.
+         *
+         * This must be called when edges changes to keep the calculation
+         * order current.
+         *
+         * @private
+         */
+        sort: function() {
+            // Employ Shin Suzuki's topolgical sort implementation for now.
+            this.order = this.tsort(this.edges);
+        },
+
+        // Use Shin's incrediablly useful topological sort implementaiton...,
+        // ... until I get a chance to write my own!
+
+        /**
+        * general topological sort
+        * @author SHIN Suzuki (shinout310@gmail.com)
+        * @param Array<Array> edges : list of edges. each edge forms Array<ID,ID>
+        *   e.g. [12 , 3]
+        *
+        * @returns Array : topological sorted list of IDs
+        **/
+        tsort: function (edges) {
+            var nodes = {}, // hash: stringified id of the node => { id: id,
+                            //  afters: list of ids }
+            sorted = [],    // sorted list of IDs ( returned value )
+            visited = {};   // hash: id of already visited node => true
+
+            var Node = function(id) {
+                this.id = id;
+                this.afters = [];
+            };
+
+            // 1. build data structures
+            edges.forEach(function(v) {
+                var from = v[0], to = v[1];
+                if (!nodes[from]) nodes[from] = new Node(from);
+                if (!nodes[to]) nodes[to] = new Node(to);
+                nodes[from].afters.push(to);
             });
 
-            sorted.unshift(id);
-        });
+            // 2. topological sort
+            Object.keys(nodes).forEach(function visit(idstr, ancestors) {
+                var node = nodes[idstr],
+                id = node.id;
 
-        return sorted;
-    }
+                // if already exists, do nothing
+                if (visited[idstr]) return;
+                if (!Array.isArray(ancestors)) ancestors = [];
+                ancestors.push(id);
+                visited[idstr] = true;
+
+                node.afters.forEach(function(afterID) {
+                    if (ancestors.indexOf(afterID) >= 0) // if already in ancestors,
+                                                         // a closed chain exists.
+                        throw new Error(
+                                'closed chain : ' + afterID + ' is in ' + id
+                                );
+
+                    visit(afterID.toString(), ancestors.map(function(v) {
+                            return v;
+                        })); // recursive call
+                });
+
+                sorted.unshift(id);
+            });
+
+            return sorted;
+        }
+    };
 
     /** The collection of lines that make-up the CalcPad. */
     var Lines;
     Lines = new LineCollection();
 
     /** Compiled line type templates. */
-    var lineTypes = loadTypes(LineItem, LineView);
+    var lineTypes = loadTypes(LineItem, LineView, DepTree);
 
     /** The application view of the CalcPad. */
     var Pad;
     Pad = new PadView();
+
+    window.DepTreeMe = DepTree;
 
 });

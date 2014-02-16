@@ -44,7 +44,6 @@
         "latex": "\\frac{wL}{8}",
         "formula": "(_model(\"w\") * _model(\"L\")) / 8",
         "units": "kNm",
-        "deps": [10, 21],
         "id": 13
     },
     {
@@ -54,7 +53,6 @@
         "latex": "\\frac{w}{2}",
         "formula": "_model(\"w\") / 2",
         "units": "kNm",
-        "deps": [21],
         "id": 14
     },
     {
@@ -64,7 +62,6 @@
         "latex": "\\frac{M_{max}}{R_{max}}",
         "formula": "_model(\"M_{max}\") / _model(\"R_{max}\")",
         "units": "m",
-        "deps": [13, 14],
         "id": 84
     },
     {
