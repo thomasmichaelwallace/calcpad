@@ -1,0 +1,1 @@
+<div class="paragraph-fix"><p><%= formattedText %></p></div>

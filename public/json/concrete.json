@@ -5,7 +5,9 @@
     },
     {
         "lineType": "Paragraph",
-        "bodyText": "A simple concrete beam in ultimate limit state bending check.\\nThis is provided as a demonstration of where CalcPad is heading; feel free to pull it apart until it breaks.\\nGot an idea, bug, or just want to snoop at the code? Take a look at <a href=\"https://github.com/thomasmichaelwallace/calcpad\">CalcPad on GitHub</a> for more information."
+        "text": "A simple concrete beam in ultimate limit state bending check.\\nThis is provided as a demonstration of where CalcPad is heading; feel free to pull it apart until it breaks.\\nGot an idea, bug, or just want to snoop at the code? Take a look at <a href=\"https://github.com/thomasmichaelwallace/calcpad\">CalcPad on GitHub</a> for more information.",
+        "leftMargin": "Intro",
+        "rightMargin": "6.4"
     },
     {
         "lineType": "SectionTitle",

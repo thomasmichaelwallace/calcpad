@@ -1,0 +1,1 @@
+<img src="<%= image %>" class="img-rounded img-responsive img-center">

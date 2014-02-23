@@ -28,22 +28,14 @@
     "mathquill": "https://github.com/mathquill/mathquill.git#latest",
     "bootstrap": "latest",
     "requirejs": "latest",
-    "underscore": "latest"
+    "underscore": "latest",
+    "requirejs-text": "latest",
+    "requirejs-tpl": "https://github.com/jfparadis/requirejs-tpl.git#latest",
+    "bootstrap-markdown": "latest"
   },
   "exportsOverride": {
     "backbone": {
       "": "backbone.js"
-    },
-    "mathquill": {
-      "": "build/mathquill.css",
-      "": "build/mathquill.js",
-      "font": "build/font"
-    },
-    "requirejs": {
-      "": "require.js"
-    },
-    "underscore": {
-      "": "underscore.js"
     },
     "MathJax": {
       "": "MathJax.js",
@@ -52,6 +44,22 @@
       "fonts": "fonts",
       "jax": "jax",
       "localization": "localization"
+    },
+    "mathquill": {
+      "": "build/mathquill.js",
+      "font": "build/font"
+    },
+    "requirejs": {
+      "": "require.js"
+    },
+    "requirejs-text": {
+      "": "text.js"
+    },
+    "requirejs-tpl": {
+      "": "tpl.js"
+    },
+    "underscore": {
+      "": "underscore.js"
     }
   }
 }

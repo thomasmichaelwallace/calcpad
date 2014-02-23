@@ -1,0 +1,1 @@
+<input type="text" name="text" class="form-control first-element" value="<%= text %>">

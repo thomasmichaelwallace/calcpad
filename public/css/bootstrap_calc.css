@@ -5,7 +5,7 @@ body {
 
 div.container {
 	/* Sets the global width of a page. */
-	width: 700px;
+	width: 800px;
 }
 
 img.img-center {
@@ -73,6 +73,9 @@ a#toolbar.toolbar-on {
 div.paragraph-fix {
 	margin-bottom: -10px;
 }
+p.paragraph-fix {
+	margin-bottom: 0px;
+}
 
 span.mathquill-bootstrap {
 	.display: block;
@@ -102,4 +105,22 @@ div.condition-false {
 	visibility: collapse;
 }
 
-.
+div.left-margin {
+	border-right-style: solid;
+	border-right-color: #ddd;
+	border-right-width: 1px;
+}
+div.right-margin {
+	border-left-style: solid;
+	border-left-color: #ddd;
+	border-left-width: 1px;
+}
+
+table.table-list {
+	margin-bottom: -10px;
+	margin-top: -10px;
+}
+
+a.list-group-table {
+	border: none;
+}

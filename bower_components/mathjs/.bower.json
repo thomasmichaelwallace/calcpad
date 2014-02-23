@@ -1,6 +1,6 @@
 {
   "name": "mathjs",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "main": "./dist/math.js",
   "ignore": [
     "coverage",
@@ -16,11 +16,11 @@
     "package.json"
   ],
   "homepage": "https://github.com/josdejong/mathjs",
-  "_release": "0.18.0",
+  "_release": "0.18.1",
   "_resolution": {
     "type": "version",
-    "tag": "v0.18.0",
-    "commit": "fe8d832bedd06dd411a37d35b781241762e7e590"
+    "tag": "v0.18.1",
+    "commit": "a3f68dc06687a72c939e673f1925665a400759da"
   },
   "_source": "git://github.com/josdejong/mathjs.git",
   "_target": "*",

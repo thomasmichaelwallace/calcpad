@@ -1,0 +1,1 @@
+<p class="text-warning paragraph-fix">No editor is available for the <%= lineType %> line-type.</p>
