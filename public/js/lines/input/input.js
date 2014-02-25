@@ -42,7 +42,22 @@ define(function (require) {
                 symbol: "i",
                 description: "New Parameter",
                 unit: "kN",
-                savedValue: 0
+                savedValue: 0,
+                state: 0
+            },
+
+            sid: null,
+
+            setup: function() {
+                this.collection.depTree.registerToken(
+                    this.cid,
+                    this.get("symbol"),
+                    this.get("state")
+                );
+            },
+
+            load: function() {
+                this.on("add", this.setup);
             }
 
         }),

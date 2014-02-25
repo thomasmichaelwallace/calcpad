@@ -1,13 +1,13 @@
 /**
-    Base view for a for a blank line of the calculation.
-    @module     LineItem
-    @requires   Backbone
+    Calculation domain manager.
+    @module     DepTree
+    @requires   underscore
  */
-define([
-    "underscore"
-], function(
-    _
-) {
+
+define(function (require) {
+    "use strict";
+
+    var _   = require('underscore');
 
     /**
      * Manager for the order that values are re-calculated.
@@ -15,17 +15,49 @@ define([
      * @namespace
      * @private
      */
-    return {
+    var depTree = {
 
         tokens: {},
 
+        allocSid: 0,
+
+        nextSid: function() {
+            this.allocSid += 1;
+            return this.allocSid;
+        },
+
         registerToken: function(cid, symbol, state) {
             // check and extend.
-            _.extend(this.tokens, {
-                sid: 0,
-                symbol: symbol,
-                states: { state: cid }
+
+            console.log(this.tokens);
+
+            var self = this;
+            var sids = _.keys(self.tokens);
+            var sid = _.find(sids, function(key) {
+                return self.tokens[key].symbol === symbol;
             });
+
+            if (sid === undefined) {
+                sid = this.nextSid();
+                this.tokens[sid] = {
+                    state: null,
+                    symbol: symbol,
+                    states: {}
+                };
+                this.tokens[sid].states[state] = cid;
+                return sid;
+
+            } else {
+
+                if (state in baseToken.states) {
+                    throw ("token/state exists!");
+                } else {
+                    baseToken.states[state] = cid;
+                    return sid;
+                }
+
+            }
+
         },
 
         unregisterToken: function(symbol, state) {
@@ -257,4 +289,6 @@ define([
             return sorted;
         }
     };
+
+    return depTree;
 });
