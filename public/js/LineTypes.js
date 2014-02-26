@@ -12,6 +12,7 @@ define(function (require) {
 
     var blank =         require('lines/blank/blank'),
         image =         require('lines/image/image'),
+        formula =       require('lines/formula/formula'),
         input =         require('lines/input/input'),
         paragraph =     require('lines/paragraph/paragraph'),
         sectiontitle =  require('lines/sectiontitle/sectiontitle'),
@@ -22,6 +23,7 @@ define(function (require) {
 
         Blank:          blank,
         Image:          image,
+        Formula:        formula,
         Input:          input,
         Paragraph:      paragraph,
         SectionTitle:   sectiontitle,
