@@ -107,7 +107,10 @@ define(function (require) {
              */
             ready: function() {
                 this.tokenise();
+<<<<<<< HEAD
                 
+=======
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                 this.collection.depTree.registerDependents(this.sid, this.dependents);
             },
 

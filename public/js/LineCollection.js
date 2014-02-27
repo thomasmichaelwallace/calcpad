@@ -61,7 +61,10 @@ define([
             // Walk the topologically sorted tree for efficient re-calcuation.
             _.each(collection.depTree.order, function(sid) {
                 var cid = collection.depTree.getTokenCid(sid);
+<<<<<<< HEAD
                 console.log("calc => sid:" + sid);
+=======
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                 var line;
                 line = collection.get(cid);
                 if (line === undefined) { console.log(cid); }

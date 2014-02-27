@@ -46,8 +46,11 @@ define(function (require) {
             } else {
 
                 if (state in this.tokens[sid].states) {
+<<<<<<< HEAD
                     console.log(symbol);
                     console.log(cid);
+=======
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                     throw ("token/state exists!");
                 } else {
                     this.tokens[sid].states[state] = cid;
@@ -83,6 +86,7 @@ define(function (require) {
             // sync with states.
             if (sid in this.tokens) {
                 var token = this.tokens[sid];
+<<<<<<< HEAD
                 var state;
                 var self = this;
                 _.each(self.onStates, function(element, index, item) {
@@ -92,6 +96,8 @@ define(function (require) {
                     }
                 });
                 token.state = state;
+=======
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                 return token.states[token.state];
             }
             return undefined;

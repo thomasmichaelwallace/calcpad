@@ -42,7 +42,11 @@ define(function (require) {
                 lineType: "Condition",
                 description: "Where:",
                 latex: "1 + 1 = 2",
+<<<<<<< HEAD
                 condition: "1"
+=======
+                state: "1"
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
             },
 
             /**
@@ -59,11 +63,18 @@ define(function (require) {
              * Re-registers the condition symbol after import.
              */
             import: function() {
+<<<<<<< HEAD
                 this.symbol = "\\state{" + this.get("condition") + "}";
                 this.sid = this.collection.depTree.registerToken(
                     this.cid,
                     this.symbol,
                     0
+=======
+                this.sid = this.collection.depTree.registerToken(
+                    this.cid,
+                    this.get("symbol"),
+                    this.get("state")
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                 );
             },
 
@@ -106,18 +117,25 @@ define(function (require) {
                 var lines = this.collection;
                 /* jshint ignore:start */
                     // math.js gives us a safe eval, so ignore jshint.
+<<<<<<< HEAD
                     var result = math.eval(this.condition, {
+=======
+                    return math.eval(this.condition, {
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
                         _sid: function(sid) {
                             var cid = lines.depTree.getTokenCid(sid);
                             return lines.get(cid).value;
                             }
                     });
                 /* jshint ignore:end */
+<<<<<<< HEAD
                 console.log("exp");
                 console.log(this.get("condition"));
                 console.log(result);
                 this.collection.depTree.switchState(this.get("condition"), result);
                 return result;
+=======
+>>>>>>> d4ec06de844f058cfd0643a1f690601ea133e9b8
             },
 
         }),
