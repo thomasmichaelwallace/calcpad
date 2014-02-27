@@ -82,7 +82,11 @@ requirejs.config({
     }
 });
 
+var _debug;
+var _global = { latexPosition: [], latexSymbols: []};
+
 // Start the main app logic.
 requirejs(["cp-dev"],
     function (Pad) {
+        _debug = Pad;
 });

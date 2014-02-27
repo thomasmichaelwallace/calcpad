@@ -23,6 +23,8 @@ define(function (require) {
          * @lends PadView.prototype
          */
 
+         _lines: function() { return Lines; },
+
         /**
          * Shared reference to the line currently being edited.
          * @private
@@ -47,16 +49,24 @@ define(function (require) {
 
             Lines.fetch({
                 success: function(model, response) {
-                    // Build the update order for the first time.
-                    _.each(Lines.models, function(element, index, list) {
-                        DepTree.addSymbol(element);
+                    Lines.each(function(line) {
+                        line.import();
                     });
-                    _.each(Lines.models, function(element, index, list) {
-                        //element.setDeps(); //.bind(element);
-                        DepTree.addDependents(element);
+                    Lines.each(function(line) {
+                        line.ready();
                     });
-                    DepTree.sort();
+                    //DepTree.ready();
                     Lines.calculate();
+                    // // Build the update order for the first time.
+                    // _.each(Lines.models, function(element, index, list) {
+                    //     DepTree.addSymbol(element);
+                    // });
+                    // _.each(Lines.models, function(element, index, list) {
+                    //     //element.setDeps(); //.bind(element);
+                    //     DepTree.addDependents(element);
+                    // });
+                    // DepTree.sort();
+                    // Lines.calculate();
                 }
             });
         },

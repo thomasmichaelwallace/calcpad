@@ -29,35 +29,80 @@ define(function (require) {
         registerToken: function(cid, symbol, state) {
             // check and extend.
 
-            console.log(this.tokens);
-
-            var self = this;
-            var sids = _.keys(self.tokens);
-            var sid = _.find(sids, function(key) {
-                return self.tokens[key].symbol === symbol;
-            });
+            var sid = this.getSid(symbol);
 
             if (sid === undefined) {
                 sid = this.nextSid();
                 this.tokens[sid] = {
-                    state: null,
+                    sid: sid,
+                    state: 0,
                     symbol: symbol,
                     states: {}
                 };
+                this.symbols[symbol] = sid;
                 this.tokens[sid].states[state] = cid;
                 return sid;
 
             } else {
 
-                if (state in baseToken.states) {
+                if (state in this.tokens[sid].states) {
+                    console.log(symbol);
+                    console.log(cid);
                     throw ("token/state exists!");
                 } else {
-                    baseToken.states[state] = cid;
+                    this.tokens[sid].states[state] = cid;
                     return sid;
                 }
 
             }
 
+        },
+
+        /**
+         * Add all the dependents of a line to the tree.
+         *
+         * @param {Object} line - Line to add dependents of.
+         * @public
+         */
+        registerDependents: function(sid, depSids) {
+            var self;       // reference back to the current collection.
+            var edge;       // id of the edge formed.
+            self = this;
+            edge = sid;
+
+            _.each(depSids, function(depSid) {
+                self.edges.push([depSid, edge]);
+            });
+
+            this.sort();
+        },
+
+        symbols: {},
+
+        getTokenCid: function(sid) {
+            // sync with states.
+            if (sid in this.tokens) {
+                var token = this.tokens[sid];
+                var state;
+                var self = this;
+                _.each(self.onStates, function(element, index, item) {
+                    if (element in token.states) {
+                        console.log(element);
+                        state = element;
+                    }
+                });
+                token.state = state;
+                return token.states[token.state];
+            }
+            return undefined;
+        },
+
+        getSid: function(symbol) {
+            var self = this;
+            var sids = _.keys(self.tokens);
+            return _.find(sids, function(key) {
+                return self.tokens[key].symbol === symbol;
+            });
         },
 
         unregisterToken: function(symbol, state) {
@@ -134,7 +179,6 @@ define(function (require) {
             if (on && index == -1) {
                 this.onStates.push(state);
             }
-
         },
 
         addState: function(line) {

@@ -25,9 +25,19 @@ define(function (require) {
         },
 
         /**
-         * Called when a model is loaded from a file
+         * Called when a new model is created.
          */
         load: function () {},
+
+        /**
+         * Called after this line has been loaded from a file.
+         */
+        import: function () {},
+
+        /**
+         * Called after a model is completely loaded from a file.
+         */
+        ready: function () {},
 
         /**
          * Default values given to new, or incomplete, lines.

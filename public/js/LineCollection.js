@@ -58,12 +58,16 @@ define([
         calculate: function(dirty) {
             var collection;
             collection = this;
-
             // Walk the topologically sorted tree for efficient re-calcuation.
-            _.each(DepTree.order, function(cid) {
+            _.each(collection.depTree.order, function(sid) {
+                var cid = collection.depTree.getTokenCid(sid);
+                console.log("calc => sid:" + sid);
                 var line;
                 line = collection.get(cid);
-                if (line !== undefined) { line.calculate(); }
+                if (line === undefined) { console.log(cid); }
+                if (line !== undefined) {
+                    line.calculate();
+                }
             });
         }
 
